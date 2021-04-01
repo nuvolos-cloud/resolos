@@ -1,0 +1,24 @@
+# Sync modification times as well
+times = true
+# Batch mode - do not ask for user input
+batch = true
+# Do not print status updates
+terse = true
+# Prefer newer version in case of conflict
+prefer = newer
+copyonconflict = false
+# Do not sync user and owner
+owner = false
+group = false
+# In case the user completely wipes one root, Unison by default is too cautious and asks for confirmation - disable this check
+confirmbigdel = true
+
+# Files/folders to ignore
+ignore = Name .git
+ignore = Name .ipynb_checkpoints
+ignore = Name .*.unison.tmp
+ignore = Name *.unison.tmp
+ignore = Name *~
+ignore = Name .*~
+ignore = Name .maestral.cache
+ignore = Name .resolos
