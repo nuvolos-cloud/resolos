@@ -82,3 +82,5 @@ Since resolos needs conda, it is recommended to install resolos into the base co
 conda activate
 pip install resolos
 ```
+
+The following section hosts two quickstart examples.

@@ -43,15 +43,9 @@ import yaml
 @click.pass_context
 def res(ctx):
     """
-    Resolos
+    Resolos is a toolkit for managing and archiving scientific projects
+    both on local development machines and remote HPC cluster.
 
-    Resolos is a toolkit for managing, archiving and submitting scientific projects.
-
-    Main commands:
-    init
-    archive
-    remote
-    job
     """
     if ctx.obj is None:
         ctx.obj = dict()
@@ -116,8 +110,8 @@ def res_check(ctx, **kwargs):
 @click.pass_context
 def res_info(ctx, **kwargs):
     """
-    Runs some checks for the configured remotes and the local environment.
-    Must be called from a resolos project
+    Returns resolos global configuration.
+    When called from a resolos project, it displays configuration for the project itself as well.
 
     """
     info()
@@ -133,8 +127,8 @@ def res_info(ctx, **kwargs):
 @click.pass_context
 def res_init(ctx, **kwargs):
     """
-    Runs some checks for the configured remotes and the local environment.
-    Must be called from a resolos project
+    Configures passwordless SSH access via SSH keys.
+    Only needs to be run once per remote.
 
     """
     remote_settings = get_remote(read_remote_db(), kwargs.get("remote"))
@@ -144,6 +138,10 @@ def res_init(ctx, **kwargs):
 @res.group("remote")
 @click.pass_context
 def res_remote(ctx):
+    """
+    Remotes are machines with SSH access supporting job execution with some job scheduler.
+    Currently only Slurm running on Linux machines is supported.
+    """
     pass
 
 
@@ -297,7 +295,7 @@ def res_remote_add(ctx, **kwargs):
 @click.pass_context
 def res_remote_add(ctx, **kwargs):
     """
-    Adds a new remote with name 'name' to the Resolos configuration
+    Updates existing remote with name 'name' in the Resolos configuration
     """
     remote_id = kwargs["name"]
     db = read_remote_db()
@@ -491,7 +489,7 @@ def res_job_cancel(ctx, job_id, **kwargs):
 @click.pass_context
 def res_job_status(ctx, job_id, **kwargs):
     """
-    Checks the job status on the remote
+    Displays the job details on the remote identified by the supplied job_id
     """
     job_status(ctx.obj["remote_settings"], job_id)
 
@@ -514,6 +512,9 @@ def res_job_list(ctx, **kwargs):
 @res.group("archive")
 @click.pass_context
 def res_archive(ctx):
+    """
+    Archives contain all project files plus recepies for rebuilding the conda environment on another machine.
+    """
     pass
 
 
@@ -561,7 +562,7 @@ def res_archive_load(ctx, source, **kwargs):
 @click.pass_context
 def res_install(ctx, packages, **kwargs):
     """
-    Install package
+    Installs conda package(s) into the linked local and remote conda environments
 
     """
     all_remotes = kwargs.get("all_remotes")
@@ -604,7 +605,7 @@ def res_install(ctx, packages, **kwargs):
 @click.pass_context
 def res_uninstall(ctx, packages, **kwargs):
     """
-    Uninstall packages
+    Uninstall conda package(s) from the linked local and remote conda environments
 
     """
     all_remotes = kwargs.get("all_remotes")
