@@ -1,2 +1,6 @@
 markdown
+click
 mkdocs-click
+click-logging
+pyyaml
+semver
