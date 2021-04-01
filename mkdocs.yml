@@ -8,7 +8,9 @@ nav:
   - Creating projects: projects.md
   - Working with projects: work_with_projects.md
   - Archival: archive.md
+  - Commands: commands.md
 
 
 markdown_extensions:
+  - mkdocs-click
   - attr_list
