@@ -21,7 +21,7 @@ r3s init
 ```
 
 Initialization will generate the initial configuration for the project, and runs some checks. For a complete reference of 
-options, check the [command refence](commands.md)
+options, check the [command reference](commands.md).
 
 At this point, it's already possible to run code locally in the created environment with
 

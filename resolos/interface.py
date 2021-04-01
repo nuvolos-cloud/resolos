@@ -519,31 +519,13 @@ def res_archive(ctx):
 
 @res_archive.command("create")
 @click.argument("output", type=click.Path())
-@click.option(
-    "--zenodo-access-token",
-    help="Personal access token for Zenodo",
-    envvar="ZENODO_ACCESS_TOKEN",
-    required=False,
-)
 @click.pass_context
 def res_archive_create(ctx, output, **kwargs):
     """
     Archives the project to the specified destination.
 
-    Output can be a filesystem path (e.g. /home/user/res_v1) writeable for the the resolos process.
+    Output must be a filesystem path (e.g. ../res_v1.tar.gz) writeable for the the resolos process.
     The path should not be inside the project folder.
-
-    Alternatively, it can come in the format zenodo:metadata_file:archive_name, where metadata_file
-    is the filesystem path of a JSON file documenting the Zenodo deposit, archive_name is the name of the archive.
-    The archive file will automatically be deposited to Zenodo if a valid Zenodo Access Token is found.
-    The access token is searched in the following order and the first found token is used:
-
-    - Environment variable ZENODO_ACCESS_TOKEN
-
-    - CLI flag --zenodo-access-token
-
-    - Resolos configuration at key zenodo_access_token
-
     """
     local_env = get_project_env()
     make_archive(local_env, output)
