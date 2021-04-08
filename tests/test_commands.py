@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 from click.testing import CliRunner
 from resolos.interface import res_init, res_run
 
@@ -18,4 +18,4 @@ def test_download():
     with runner.isolated_filesystem() as fs:
         result = runner.invoke(res_init, ["-s", "https://resolos.s3.eu-central-1.amazonaws.com/examples/data_with_pandas.tar.gz"])
         assert result.exit_code == 0
-        assert os.path.exists(os.path.join(fs, "process_dataset.py"))
+        assert (Path(fs) / "process_dataset.py").exists()
