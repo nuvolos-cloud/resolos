@@ -33,7 +33,7 @@ r3s run "echo Hello world!"
 
 In Resolos, there is a following hierarchy between projects and remotes:
 
-- Resolos stores its configuration in the home folder of the user account. Therefore, multiple resolos installations on the same user account are not recommended!
+- Resolos stores its configuration in the home folder of the user account. Hence, multiple Resolos installations on the same user account are not recommended.
 - a Resolos configuration can have multiple remotes defined
 - arbitrary number of projects can be initalized in file system folders, but nested projects are not allowed
 - each project can be synced to any of the remotes defined for the user

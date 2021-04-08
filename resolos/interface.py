@@ -75,6 +75,12 @@ def res(ctx):
     help="The source archive to initialize the project from. "
     "Can be a path on the filesystem, or a download URL of the archive file",
 )
+@click.option(
+    "-y",
+    is_flag=True,
+    help="If specified, the local/rempte conda environment will be created without a confirmation prompt.",
+    required=False,
+)
 @click.pass_context
 def res_init(ctx, **kwargs):
     """
@@ -92,6 +98,7 @@ def res_init(ctx, **kwargs):
         local_env_name=kwargs.get("env_name"),
         remote_env_name=kwargs.get("remote_env_name"),
         remote_files_path=kwargs.get("remote_path"),
+        create_conda_envs=kwargs.get("y")
     )
 
 
@@ -125,7 +132,7 @@ def res_info(ctx, **kwargs):
     required=False,
 )
 @click.pass_context
-def res_init(ctx, **kwargs):
+def res_setup_ssh(ctx, **kwargs):
     """
     Configures passwordless SSH access via SSH keys.
     Only needs to be run once per remote.
@@ -401,7 +408,7 @@ def res_sync(ctx, **kwargs):
 @res.command("run")
 @click.argument("command", type=str)
 @click.pass_context
-def res_job(ctx, **kwargs):
+def res_run(ctx, **kwargs):
     cmd = kwargs.get("command")
     local_env = get_project_env()
     execute_command_in_local_conda_env(cmd, local_env)

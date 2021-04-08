@@ -121,7 +121,7 @@ def run_shell_cmd(
             if new_stdout.startswith(CMD_END):
                 print_to_info = False
             if print_to_info:
-                clog.info(new_stdout.replace("\n", ""))
+                clog.info(new_stdout.trim())
             if new_stdout.startswith(CMD_BEGIN):
                 print_to_info = True
         else:
