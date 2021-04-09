@@ -3,7 +3,7 @@ name: Test for pull requests
 on:
   pull_request:
     branches:
-      - master
+      - main
     types: [opened, reopened, edited, synchronize]
 
 jobs:
@@ -16,8 +16,20 @@ jobs:
 
       - name: Install dependencies
         run: |
+          wget https://github.com/bcpierce00/unison/releases/download/v2.51.3/unison-v2.51.3+ocaml-4.10.0+x86_64.linux.static.tar.gz && mkdir -p ~/bin && tar -xf unison-v2.51.3+ocaml-4.10.0+x86_64.linux.static.tar.gz bin/unison && export PATH="$(pwd)/bin:$PATH"
+          echo "Unison installed at: $(which unison)"
           pip install -r requirements.txt
+
+      - name: Setup conda
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          auto-update-conda: true
+          python-version: 3.8
 
       - name: Run test suite
         run: |
+          echo "Adding unison to path" && export PATH="$(pwd)/bin:$PATH"
+          echo "Unison installed at: $(which unison)"
+          echo "Conda version is $(conda --version)"
           pytest
+

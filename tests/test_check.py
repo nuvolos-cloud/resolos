@@ -1,5 +1,6 @@
 from click.testing import CliRunner
 from resolos.interface import res_check
+from tests.common import verify_result
 import logging
 
 logger = logging.getLogger(__name__)
@@ -8,5 +9,4 @@ logger = logging.getLogger(__name__)
 def test_check():
     runner = CliRunner()
     with runner.isolated_filesystem() as fs:
-        result = runner.invoke(res_check, ["--raise-on-error"])
-        assert result.exit_code == 0, result.output
+        verify_result(runner.invoke(res_check, ["--raise-on-error"]))
