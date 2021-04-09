@@ -21,7 +21,7 @@ import pathlib
 import os
 
 
-def check_target(target=None):
+def check_target(target=None, raise_on_error=False):
     if target is None:
         check_bash_version_local()
         clog.info(f"PASS - Bash version is sufficiently new")
@@ -33,8 +33,10 @@ def check_target(target=None):
         try:
             check_conda_installed_remote(target)
             clog.info(f"PASS - Conda is installed on remote '{target['name']}'")
-        except MissingDependency:
-            if click.confirm(
+        except MissingDependency as ex:
+            if raise_on_error:
+                raise ex
+            elif click.confirm(
                 "It seems conda is not available on the remote. "
                 "Do you want to install it now?",
                 default=True,
@@ -43,8 +45,10 @@ def check_target(target=None):
         try:
             check_unison_installed_remote(target)
             clog.info(f"PASS - Unison is installed on remote '{target['name']}'")
-        except MissingDependency:
-            if click.confirm(
+        except MissingDependency as ex:
+            if raise_on_error:
+                raise ex
+            elif click.confirm(
                 "It seems unison is not available on the remote. "
                 "Do you want to install it now?",
                 default=True,
@@ -52,13 +56,13 @@ def check_target(target=None):
                 install_unison_remote(target)
 
 
-def check():
-    check_target()
+def check(raise_on_error=False):
+    check_target(raise_on_error=raise_on_error)
     db = read_remote_db()
     for remote_id in list_remote_ids(db):
         clog.info(f"Checking remote '{remote_id}'")
         remote_settings = get_remote(db, remote_id)
-        check_target(remote_settings)
+        check_target(remote_settings, raise_on_error=raise_on_error)
         if in_resolos_dir():
             check_unison_connection(remote_settings)
 
