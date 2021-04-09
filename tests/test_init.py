@@ -10,16 +10,13 @@ logger = logging.getLogger(__name__)
 def test_init_empty():
     runner = CliRunner()
     with runner.isolated_filesystem() as fs:
-        logger.info("Creating new project")
         verify_result(runner.invoke(res_init, ["-y"]))
-        logger.info("Checking conda version")
-        verify_result(runner.invoke(res_run, ["conda --version"]))
 
 
-def test_download():
+def test_init_from_archive():
     runner = CliRunner()
     with runner.isolated_filesystem() as fs:
-        logger.info("Checking conda version")
+        project_folder = Path(fs)
         verify_result(
             runner.invoke(
                 res_init,
@@ -29,4 +26,18 @@ def test_download():
                 ],
             )
         )
-        assert (Path(fs) / "process_dataset.py").exists()
+        assert (project_folder / "README.md").exists()
+        assert (project_folder / "process_dataset.py").exists()
+        assert (project_folder / "var_spx_monthly.csv").exists()
+        assert not (project_folder / "var_spx_monthly_mean.csv").exists()
+        output = verify_result(
+            runner.invoke(
+                res_run,
+                ["python process_dataset.py"],
+            )
+        )
+        assert "Written the mean of the columns to var_spx_monthly_mean.csv" in output
+        assert (project_folder / "README.md").exists()
+        assert (project_folder / "process_dataset.py").exists()
+        assert (project_folder / "var_spx_monthly.csv").exists()
+        assert (project_folder / "var_spx_monthly_mean.csv").exists()
