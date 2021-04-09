@@ -10,4 +10,4 @@ def test_info():
     runner = CliRunner()
     with runner.isolated_filesystem() as fs:
         result = runner.invoke(res_info)
-        assert result.exit_code == 0, result.output
+        assert result.exit_code == 0, result.stderr
