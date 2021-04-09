@@ -50,7 +50,7 @@ both macOS and Linux.
 If you have wget and tar, you can execute the following command to install version `2.51.3+ocaml-4.10.0`:
 
 ```
-wget https://github.com/bcpierce00/unison/releases/download/v2.51.3/unison-v2.51.3+ocaml-4.10.0+x86_64.linux.static.tar.gz && mkdir -p ~/bin && tar -xf unison-v2.51.3+ocaml-4.10.0+x86_64.linux.static.tar.gz bin -C ~/bin && hash -r 
+wget https://github.com/bcpierce00/unison/releases/download/v2.51.3/unison-v2.51.3+ocaml-4.10.0+x86_64.linux.static.tar.gz && mkdir -p ~/bin && tar -xf unison-v2.51.3+ocaml-4.10.0+x86_64.linux.static.tar.gz -C ~ bin/unison && hash -r 
 ```
 
 
