@@ -19,6 +19,7 @@ jobs:
           wget https://github.com/bcpierce00/unison/releases/download/v2.51.3/unison-v2.51.3+ocaml-4.10.0+x86_64.linux.static.tar.gz && mkdir -p ~/bin && tar -xf unison-v2.51.3+ocaml-4.10.0+x86_64.linux.static.tar.gz bin/unison && export PATH="$(pwd)/bin:$PATH"
           echo "Unison installed at: $(which unison)"
           pip install -r requirements.txt
+          conda init bash
 
       - name: Run test suite
         run: |
