@@ -13,3 +13,5 @@ def verify_result(result: Result):
             raise Exception(
                 f"Exit code was {result.exit_code}, but no exception was caught"
             )
+    else:
+        return result.output
