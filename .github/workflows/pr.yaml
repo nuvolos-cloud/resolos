@@ -1,0 +1,23 @@
+name: Test for pull requests
+
+on:
+  pull_request:
+    branches:
+      - master
+    types: [opened, reopened, edited, synchronize]
+
+jobs:
+  build:
+    name: Run pytest
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pull and checkout branch
+        uses: actions/checkout@master
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run test suite
+        run: |
+          pytest

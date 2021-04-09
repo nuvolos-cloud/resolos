@@ -98,11 +98,17 @@ def res_init(ctx, **kwargs):
         local_env_name=kwargs.get("env_name"),
         remote_env_name=kwargs.get("remote_env_name"),
         remote_files_path=kwargs.get("remote_path"),
-        create_conda_envs=kwargs.get("y")
+        create_conda_envs=kwargs.get("y"),
     )
 
 
 @res.command("check")
+@click.option(
+    "--raise-on-error",
+    is_flag=True,
+    help="Do not offer installing missing dependencies on remotes, raise exception instead",
+    required=False,
+)
 @click.pass_context
 def res_check(ctx, **kwargs):
     """
@@ -110,7 +116,7 @@ def res_check(ctx, **kwargs):
     Must be called from a resolos project
 
     """
-    check()
+    check(kwargs.get("raise_on_error", False))
 
 
 @res.command("info")
