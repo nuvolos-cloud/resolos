@@ -22,5 +22,7 @@ jobs:
 
       - name: Run test suite
         run: |
+          echo "Adding unison to path" && export PATH="$(pwd)/bin:$PATH"
+          echo "Unison installed at: $(which unison)"
           pytest
 
