@@ -35,6 +35,9 @@ jobs:
   macos:
     name: Run pytest on macos-latest
     runs-on: macos-latest
+    defaults:
+      run:
+        shell: bash -l {0}
     steps:
       - name: Pull and checkout branch
         uses: actions/checkout@master
@@ -52,20 +55,20 @@ jobs:
           python-version: 3.8
 
       - name: Install dependencies
-        shell: bash -l {0}
         run: |
+          echo "Installing unison"
           wget https://github.com/bcpierce00/unison/releases/download/v2.51.3/unison-v2.51.3+ocaml-4.10.1+x86_64.macos-10.15.tar.gz && mkdir -p ~/bin && tar -xf unison-v2.51.3+ocaml-4.10.1+x86_64.macos-10.15.tar.gz bin/unison && export PATH="$(pwd)/bin:$PATH"
           echo "Unison installed at: $(which unison)"
+          echo "Installing dependencies into test environment"
           conda activate test
           conda env list
           pip install -r requirements.txt
 
       - name: Run test suite
-        shell: bash -l {0}
         run: |
           echo "Adding unison to path" && export PATH="$(pwd)/bin:$PATH"
           echo "Unison installed at: $(which unison)"
-          echo "Conda version is $(conda --version)"
+          echo "Activating test environment"
           conda activate test
-          conda env list
+          echo "Conda version is $(conda --version)"
           pytest
