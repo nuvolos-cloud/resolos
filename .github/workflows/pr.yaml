@@ -23,7 +23,7 @@ jobs:
       - name: Setup conda
         uses: conda-incubator/setup-miniconda@v2
         with:
-          auto-update-conda: true
+          auto-update-conda: false
           python-version: 3.8
 
       - name: Run test suite
@@ -47,7 +47,9 @@ jobs:
       - name: Setup conda
         uses: conda-incubator/setup-miniconda@v2
         with:
-          auto-update-conda: true
+          auto-update-conda: false
+          auto-activate-base: false
+          activate-environment: ""
           python-version: 3.8
 
       - name: Install dependencies
@@ -56,6 +58,7 @@ jobs:
           wget https://github.com/bcpierce00/unison/releases/download/v2.51.3/unison-v2.51.3+ocaml-4.10.1+x86_64.macos-10.15.tar.gz && mkdir -p ~/bin && tar -xf unison-v2.51.3+ocaml-4.10.1+x86_64.macos-10.15.tar.gz bin/unison && export PATH="$(pwd)/bin:$PATH"
           echo "Unison installed at: $(which unison)"
           conda env list
+          conda activate
           pip install -r requirements.txt
 
       - name: Run test suite
@@ -64,4 +67,5 @@ jobs:
           echo "Adding unison to path" && export PATH="$(pwd)/bin:$PATH"
           echo "Unison installed at: $(which unison)"
           echo "Conda version is $(conda --version)"
+          conda activate
           pytest
