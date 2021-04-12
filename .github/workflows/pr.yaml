@@ -46,6 +46,7 @@ jobs:
           python-version: 3.8
 
       - name: Install dependencies
+        shell: bash -l {0}
         run: |
           wget https://github.com/bcpierce00/unison/releases/download/v2.51.3/unison-v2.51.3+ocaml-4.10.1+x86_64.macos-10.15.tar.gz && mkdir -p ~/bin && tar -xf unison-v2.51.3+ocaml-4.10.1+x86_64.macos-10.15.tar.gz bin/unison && export PATH="$(pwd)/bin:$PATH"
           echo "Unison installed at: $(which unison)"
@@ -53,6 +54,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run test suite
+        shell: bash -l {0}
         run: |
           echo "Adding unison to path" && export PATH="$(pwd)/bin:$PATH"
           echo "Unison installed at: $(which unison)"
