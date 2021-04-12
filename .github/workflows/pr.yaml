@@ -39,21 +39,23 @@ jobs:
       - name: Pull and checkout branch
         uses: actions/checkout@master
 
-      - name: Install dependencies
-        run: |
-          wget https://github.com/bcpierce00/unison/releases/download/v2.51.3/unison-v2.51.3+ocaml-4.10.0+x86_64.linux.static.tar.gz && mkdir -p ~/bin && tar -xf unison-v2.51.3+ocaml-4.10.0+x86_64.linux.static.tar.gz bin/unison && export PATH="$(pwd)/bin:$PATH"
-          echo "Unison installed at: $(which unison)"
-          pip install -r requirements.txt
-
       - name: Setup conda
         uses: conda-incubator/setup-miniconda@v2
         with:
           auto-update-conda: true
           python-version: 3.8
 
+      - name: Install dependencies
+        run: |
+          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+          wget https://raw.githubusercontent.com/Homebrew/homebrew-core/0edb12c144c6f64e6c35bdd4f6afb7d56d10bf60/Formula/unison.rb && brew install ./unison.rb
+          echo "Unison installed at: $(which unison)"
+          conda activate
+          pip install -r requirements.txt
+
       - name: Run test suite
         run: |
-          echo "Adding unison to path" && export PATH="$(pwd)/bin:$PATH"
           echo "Unison installed at: $(which unison)"
           echo "Conda version is $(conda --version)"
+          conda activate
           pytest
