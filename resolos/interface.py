@@ -306,7 +306,7 @@ def res_remote_add(ctx, **kwargs):
     help="The path of the project folder on the remote. Will be created if not exists",
 )
 @click.pass_context
-def res_remote_add(ctx, **kwargs):
+def res_remote_update(ctx, **kwargs):
     """
     Updates existing remote with name 'name' in the Resolos configuration
     """
