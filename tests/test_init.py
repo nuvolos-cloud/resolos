@@ -1,6 +1,7 @@
 from pathlib import Path
 from click.testing import CliRunner
 from resolos.interface import res_init, res_run
+from resolos.shell import run_shell_cmd
 from tests.common import verify_result
 import logging
 
@@ -17,6 +18,7 @@ def test_init_from_archive():
     runner = CliRunner()
     with runner.isolated_filesystem() as fs:
         project_folder = Path(fs)
+        run_shell_cmd("which python")
         verify_result(
             runner.invoke(
                 res_init,
@@ -33,7 +35,7 @@ def test_init_from_archive():
         output = verify_result(
             runner.invoke(
                 res_run,
-                ["python process_dataset.py"],
+                ["which python; python process_dataset.py"],
             )
         )
         assert "Written the mean of the columns to var_spx_monthly_mean.csv" in output

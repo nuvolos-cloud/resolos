@@ -13,12 +13,14 @@ from .unison import (
 from .config import get_global_dict_config
 from .platform import in_resolos_dir
 from .remote import read_remote_db, list_remote_ids, get_remote
-from .exception import MissingDependency
+from .exception import MissingDependency, ShellError
 from .shell import run_ssh_cmd, run_shell_cmd, check_bash_version_local
 import click
 from platform import node
 import pathlib
 import os
+
+RESOLOS_PRIVATE_SSH_KEY_LOCATION = "~/.ssh/id_rsa_resolos"
 
 
 def check_target(target=None, raise_on_error=False):
@@ -68,7 +70,7 @@ def check(raise_on_error=False):
 
 
 def setup_ssh(remote_settings):
-    key_location = os.path.expanduser("~/.ssh/id_rsa_resolos")
+    key_location = os.path.expanduser(RESOLOS_PRIVATE_SSH_KEY_LOCATION)
     if not pathlib.Path(key_location).exists():
         ret_val, output = run_shell_cmd(
             f"ssh-keygen -t rsa -N '' -C resolos@{node()} -f ~/.ssh/id_rsa_resolos"
@@ -87,11 +89,21 @@ def setup_ssh(remote_settings):
         f"Will set up now remote '{remote_settings['name']}' to accept the new SSH key. "
         f"Please enter your password when prompted"
     )
-    ret_val, pub_key = run_shell_cmd("cat ~/.ssh/id_rsa_resolos.pub")
-    run_ssh_cmd(
+    ret_val, pub_key = run_shell_cmd(f"cat {RESOLOS_PRIVATE_SSH_KEY_LOCATION}.pub")
+    if ret_val != 0:
+        raise ShellError(
+            f"Could not find SSH public key {RESOLOS_PRIVATE_SSH_KEY_LOCATION}.pub"
+        )
+    ret_val, output = run_ssh_cmd(
         remote_settings, f"mkdir -p .ssh && echo '{pub_key}' >> .ssh/authorized_keys"
     )
+    if ret_val != 0:
+        raise ShellError(
+            f"Could not add resolos ssh key to authorized_keys on remote, "
+            f"the error message was: {output}"
+        )
     gdc = get_global_dict_config()
     s = gdc.read()
-    s["ssh_key"] = key_location
-    gdc.write(s)
+    if s.get("ssh_key") != key_location:
+        s["ssh_key"] = key_location
+        gdc.write(s)
