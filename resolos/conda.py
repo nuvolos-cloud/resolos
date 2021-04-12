@@ -32,7 +32,7 @@ def verify_conda_version(output):
                 f"Please run 'conda update conda' or your preferred update method"
             )
     else:
-        clog.warn(
+        clog.warning(
             f"Could not determine conda version, resolos might not function correctly. "
             f"Please reinstall conda"
         )
@@ -375,11 +375,11 @@ def get_requirements(env_name, filename=None):
         skip = False
         name = pkg.get("name")
         if name is None:
-            clog.warn(f"Could not get name of package {pkg}, will skip it")
+            clog.warning(f"Could not get name of package {pkg}, will skip it")
             skip = True
         version = pkg.get("version")
         if version is None:
-            clog.warn(f"Could not get version of package {pkg}, will skip it")
+            clog.warning(f"Could not get version of package {pkg}, will skip it")
             skip = True
         if not skip:
             res.append(f"{name}=={version}")

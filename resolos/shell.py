@@ -27,7 +27,7 @@ def check_bash_version_local():
                 f"Please update your bash"
             )
     else:
-        clog.warn(
+        clog.warning(
             f"Could not determine bash version, resolos might not function correctly. "
             f"Please update to the latest available bash version"
         )

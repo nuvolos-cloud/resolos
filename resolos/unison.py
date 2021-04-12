@@ -36,7 +36,7 @@ def verify_unison_version(output):
                 f"Please reinstall the requested version"
             )
     else:
-        clog.warn(
+        clog.warning(
             f"Could not determine unison version, resolos might not function correctly. "
             f"Please uinstall the specified unison version"
         )
