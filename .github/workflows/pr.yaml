@@ -39,6 +39,11 @@ jobs:
       - name: Pull and checkout branch
         uses: actions/checkout@master
 
+      - name: Install modern bash
+        run: |
+          brew update
+          brew install bash
+
       - name: Setup conda
         uses: conda-incubator/setup-miniconda@v2
         with:
@@ -59,5 +64,4 @@ jobs:
           echo "Adding unison to path" && export PATH="$(pwd)/bin:$PATH"
           echo "Unison installed at: $(which unison)"
           echo "Conda version is $(conda --version)"
-          conda env list
           pytest
