@@ -47,7 +47,6 @@ jobs:
 
       - name: Install dependencies
         run: |
-          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
           wget https://raw.githubusercontent.com/Homebrew/homebrew-core/0edb12c144c6f64e6c35bdd4f6afb7d56d10bf60/Formula/unison.rb && brew install ./unison.rb
           echo "Unison installed at: $(which unison)"
           conda activate
