@@ -25,7 +25,7 @@ import re
 from semver import VersionInfo
 
 
-ver_re = re.compile("\d+.\d+.\d+")
+ver_re = re.compile(r"\d+.\d+.\d+")
 BASH_MIN_VERSION = VersionInfo.parse("5.0.0")
 CONDA_MIN_VERSION = VersionInfo.parse("4.8.0")
 UNISON_VERSION = VersionInfo.parse("2.51.3")

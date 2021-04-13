@@ -6,7 +6,8 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def test_check():
-    runner = CliRunner()
-    with runner.isolated_filesystem() as fs:
-        verify_result(runner.invoke(res_check, ["--raise-on-error"]))
+class TestCheck:
+    def test_check(self, *args):
+        runner = CliRunner()
+        with runner.isolated_filesystem() as fs:
+            verify_result(runner.invoke(res_check, ["--raise-on-error"]))
