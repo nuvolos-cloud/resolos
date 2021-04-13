@@ -41,7 +41,7 @@ def fake_ssh_cmd(
     elif "conda install" in cmd:
         return 0, echo("Successfully installed packages on the remote")
     elif "conda uninstall" in cmd:
-        return 0, echo("Successfully installed packages on the remote")
+        return 0, echo("Successfully uninstalled packages on the remote")
     elif "conda activate" in cmd:
         return 0, echo("Successfully activated conda environment on the remote")
     else:
