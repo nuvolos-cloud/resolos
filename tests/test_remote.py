@@ -1,8 +1,15 @@
 from click.testing import CliRunner
-from resolos.interface import res_remote_add, res_remote_remove, res_remote_update
+from resolos.interface import (
+    res_remote_add,
+    res_remote_remove,
+    res_remote_update,
+    res_remote_list,
+)
 from resolos.remote import read_remote_db
 from tests.common import verify_result, fake_ssh_cmd
 from unittest.mock import patch
+from pytest import raises
+from resolos.exception import RemoteMissingError
 import logging
 
 logger = logging.getLogger(__name__)
@@ -14,6 +21,17 @@ logger = logging.getLogger(__name__)
 @patch("resolos.check.run_ssh_cmd", wraps=fake_ssh_cmd)
 class TestRemote:
     remote_id = "test_remote"
+
+    def test_list_empty(self, *args):
+        runner = CliRunner()
+        with runner.isolated_filesystem() as fs:
+            verify_result(runner.invoke(res_remote_list))
+
+    def test_remove_nonexistent(self, *args):
+        runner = CliRunner()
+        with runner.isolated_filesystem() as fs:
+            with raises(RemoteMissingError):
+                verify_result(runner.invoke(res_remote_remove, [self.remote_id]))
 
     def test_remote_add(self, *args):
         runner = CliRunner()
