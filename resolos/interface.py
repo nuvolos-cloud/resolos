@@ -34,7 +34,7 @@ from .conda import (
 from .archive import make_archive, load_archive
 from .job import job_cancel, job_list, job_status, job_submit, job_run
 from .exception import NoRemotesError, NotAProjectFolderError
-from .init import init_project
+from .init import init_project, teardown
 import yaml
 
 
@@ -78,7 +78,13 @@ def res(ctx):
 @click.option(
     "-y",
     is_flag=True,
-    help="If specified, the local/rempte conda environment will be created without a confirmation prompt.",
+    help="If specified, the local/remote conda environment will be created without a confirmation prompt.",
+    required=False,
+)
+@click.option(
+    "--no-remote-setup",
+    is_flag=True,
+    help="If specified, remote configuration will be skipped (syncing of project files and environment)",
     required=False,
 )
 @click.pass_context
@@ -98,8 +104,35 @@ def res_init(ctx, **kwargs):
         local_env_name=kwargs.get("env_name"),
         remote_env_name=kwargs.get("remote_env_name"),
         remote_files_path=kwargs.get("remote_path"),
-        create_conda_envs=kwargs.get("y"),
+        yes_to_all=kwargs.get("y"),
+        no_to_remote_setup=kwargs.get("no_remote_setup"),
     )
+
+
+@res.command("teardown")
+@click.option(
+    "--skip-local",
+    is_flag=True,
+    help="If specified, the local environment and the .resolos folder will not be deleted",
+    required=False,
+)
+@click.option(
+    "--skip-remotes",
+    is_flag=True,
+    help="If specified, the remote environment and the synced files will not be deleted",
+    required=False,
+)
+@click.pass_context
+def res_teardown(ctx, **kwargs):
+    """
+    Reverses the steps of resolos init:
+
+    - Clears the project configuration folder .resolos
+
+    - Removes the linked conda environment
+
+    """
+    teardown(kwargs.get("skip_local", False), kwargs.get("skip_remotes", False))
 
 
 @res.command("check")
