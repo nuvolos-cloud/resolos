@@ -1,0 +1,16 @@
+name: Integration test with SLURM upon prerelease
+
+on:
+  release:
+    branches:
+      - main
+    types: [created]
+jobs:
+  ubuntu:
+    name: Run pytest on ubuntu-latest
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pull and checkout branch
+        uses: actions/checkout@master
+      - name: Pull and checkout branch
+          uses: actions/checkout@master
