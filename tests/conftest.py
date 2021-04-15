@@ -27,11 +27,12 @@ def class_proj(request):
 
 @fixture(scope="class")
 def test_remote(request):
-    # Creates a test remote for the class
+    # Creates a test remote for the class, without doing any setup on the remote side
     runner = CliRunner()
     verify_result(
         runner.invoke(
-            res_remote_add, ["test_remote_id", "-h", "hostname", "-u", "username"]
+            res_remote_add,
+            ["test_remote_id", "-h", "hostname", "-u", "username", "--no-remote-setup"],
         )
     )
     yield
