@@ -34,7 +34,7 @@ it's possible to install the openSSH client as well, but it is usually easier to
 
 ### Linux, macOS and Windows
 
-Follow the [official documentation](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html#regular-installation)
+Follow the [official documentation](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html#regular-installation) to install Miniconda which provides the `conda` command.
 
 
 ## IV. unison

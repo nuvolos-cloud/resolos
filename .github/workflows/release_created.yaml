@@ -9,8 +9,52 @@ jobs:
   ubuntu:
     name: Run pytest on ubuntu-latest
     runs-on: ubuntu-latest
+    env:
+      TEST_USER: testuser
+      TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}}
+      
     steps:
       - name: Pull and checkout branch
         uses: actions/checkout@master
-      - name: Pull and checkout branch
-          uses: actions/checkout@master
+
+      -name: Setup SLURM-in-docker cluster
+       run: |
+         docker-compose -f tests/integration/docker-compose.yaml
+         docker exec slurmctld bash -c 'yum –y install openssh-server openssh-clients'
+         docker exec slurmctld bash -c 'ssh-keygen -A'
+         docker exec slurmctld bash -c '/usr/sbin/sshd'
+
+         export IPADDR=$(docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' slurmctld)
+         pass=$(perl -e 'print crypt($ARGV[0], "password")' "$TEST_PASSWORD")
+         docker exec slurmctld bash -c 'useradd -m -p "$0" "$1"' "$pass" "$TEST_USER"
+
+         docker exec slurmctld bash -c "/usr/bin/sacctmgr --immediate add cluster name=linux"
+         docker-compose -f tests/integration/docker-compose.yaml restart slurmdbd slurmctld
+         docker exec slurmctld bash -c 'sacctmgr -i add account "$0" cluster=linux description="Resolos integration test user" Organization=resolos' $TEST_USER
+         docker exec slurmctld bash -c 'sacctmgr -i add user "$0" account="$0"' $TEST_USER $TEST_USER
+
+
+      - name: Install dependencies
+        run: |
+          wget https://github.com/bcpierce00/unison/releases/download/v2.51.3/unison-v2.51.3+ocaml-4.10.0+x86_64.linux.static.tar.gz && mkdir -p ~/bin && tar -xf unison-v2.51.3+ocaml-4.10.0+x86_64.linux.static.tar.gz bin/unison && export PATH="$(pwd)/bin:$PATH"
+          echo "Unison installed at: $(which unison)"
+          pip install -r requirements.txt
+
+      - name: Setup conda
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          auto-update-conda: false
+          python-version: 3.8
+
+      - name: Run test suite
+        run: |
+          echo "Adding unison to path" && export PATH="$(pwd)/bin:$PATH"
+          echo "Unison installed at: $(which unison)"
+          echo "Conda version is $(conda --version)"
+          pytest integration/test_integration.py
+
+      - name: Tear down SLURM cluster
+        run: |
+          docker-compose -f tests/integration/docker-compose.yaml -v -rmi down
+          docker network rm slurm
+
