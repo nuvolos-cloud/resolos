@@ -239,6 +239,12 @@ def res_remote(ctx):
     type=str,
     help="The path of the project folder on the remote. Will be created if not exists",
 )
+@click.option(
+    "--no-remote-setup",
+    is_flag=True,
+    help="If specified, remote configuration will be skipped (ssh key setup, syncing of project files and environment)",
+    required=False,
+)
 @click.pass_context
 def res_remote_add(ctx, **kwargs):
     """
@@ -246,6 +252,7 @@ def res_remote_add(ctx, **kwargs):
     """
     # print(ctx.obj)
     remote_name = kwargs.get("name")
+    no_remote_setup = kwargs.get("no_remote_setup", False)
     create_dict = {
         "username": kwargs.get("username"),
         "hostname": kwargs.get("hostname"),
@@ -256,13 +263,14 @@ def res_remote_add(ctx, **kwargs):
     }
     add_remote(read_remote_db(), remote_name, create_dict)
     remote_settings = get_remote(read_remote_db(), remote_name)
-    if click.confirm(
-        f"Do you want resolos to use its own SSH key for accessing the remote?",
-        default=True,
-    ):
-        setup_ssh(remote_settings)
-    clog.info(f"Running checks on new remote '{remote_name}'...")
-    check_target(remote_settings)
+    if not no_remote_setup:
+        if click.confirm(
+            f"Do you want resolos to use its own SSH key for accessing the remote?",
+            default=True,
+        ):
+            setup_ssh(remote_settings)
+        clog.info(f"Running checks on new remote '{remote_name}'...")
+        check_target(remote_settings)
     try:
         project_dir = find_project_dir()
         project_remote_config = get_project_remote_dict_config().read()
@@ -278,17 +286,20 @@ def res_remote_add(ctx, **kwargs):
             "files_path": files_path,
         }
         get_project_remote_dict_config().write(project_remote_config)
-        if not check_conda_env_exists_remote(create_dict, remote_env_name):
-            if click.confirm(
-                f"Remote conda environment '{remote_env_name}' does not exists yet. "
-                f"Do you want to create it now?",
-                default=True,
-            ):
-                create_conda_env_remote(create_dict, remote_env_name)
+        if not no_remote_setup:
+            if not check_conda_env_exists_remote(create_dict, remote_env_name):
+                if click.confirm(
+                    f"Remote conda environment '{remote_env_name}' does not exists yet. "
+                    f"Do you want to create it now?",
+                    default=True,
+                ):
+                    create_conda_env_remote(create_dict, remote_env_name)
+            else:
+                clog.info(
+                    f"Remote conda environment '{remote_env_name}' already exists, continuing..."
+                )
         else:
-            clog.info(
-                f"Remote conda environment '{remote_env_name}' already exists, continuing..."
-            )
+            clog.info(f"Skipped setup for remote")
     except NotAProjectFolderError:
         clog.debug(
             f"Command was not executed from a project folder, no project set up was done"
