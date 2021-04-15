@@ -1,3 +1,4 @@
+import os
 import yaml
 from .logging import clog
 from .platform import (
@@ -65,6 +66,9 @@ PROJECT_REMOTE_TEMPLATE = {
 }
 
 
+DEBUG_CONFIG_ACCESS = os.getenv("RESOLOS_DEBUG_CONFIG_ACCESS")
+
+
 class DictConfig(object):
     def __init__(self, path, default_generator=None):
         self.path = pathlib.Path(path)
@@ -76,14 +80,16 @@ class DictConfig(object):
                 self.write(self.default_generator())
         with self.path.open(mode="r") as f:
             d = yaml.safe_load(f)
-            clog.debug(f"Read config {self.path}:\n\n{d}")
+            if DEBUG_CONFIG_ACCESS:
+                clog.debug(f"Read config {self.path}:\n{d}")
             return d
 
     def write(self, d):
         if not self.path.parent.exists():
             pathlib.Path.mkdir(self.path.parent, parents=True)
         with self.path.open(mode="w") as f:
-            clog.debug(f"Writing new config to {self.path}:\n\n{d}")
+            if DEBUG_CONFIG_ACCESS:
+                clog.debug(f"Writing new config to {self.path}:\n{d}")
             return yaml.dump(d, f)
 
 

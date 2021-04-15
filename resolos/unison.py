@@ -130,6 +130,11 @@ def sync_files(remote_settings):
         remote_settings,
         f"mkdir -p {remote_path}",
     )
+    if ret_val != 0:
+        raise RemoteCommandError(
+            f"Failed to create project folder {remote_path} on remote, "
+            f"the error message was:\n{output}"
+        )
     ret_val, output = run_shell_cmd(
         main_unison_command(remote_settings, project_dir.absolute(), remote_path),
         shell_type="bash_login",
