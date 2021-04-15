@@ -591,6 +591,12 @@ def res_archive_create(ctx, output, **kwargs):
 
 @res_archive.command("load")
 @click.argument("source")
+@click.option(
+    "-y",
+    is_flag=True,
+    help="If specified, the archive will be loaded without a confirmation prompt.",
+    required=False,
+)
 @click.pass_context
 def res_archive_load(ctx, source, **kwargs):
     """
@@ -599,7 +605,7 @@ def res_archive_load(ctx, source, **kwargs):
     Source can be a filesystem path or a publicly accessible https download url.
     """
 
-    load_archive(source)
+    load_archive(source, confirm_needed=not kwargs.get("y"))
 
 
 @res.command("install")

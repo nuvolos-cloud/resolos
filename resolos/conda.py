@@ -73,8 +73,10 @@ def check_conda_env_exists_local(env_name: str):
 
 
 def create_conda_env_local(env_name: str):
+    # Python < 3.9 is required by conda-tree
+    # https://stackoverflow.com/questions/66174862/import-error-cant-import-name-gcd-from-fractions
     ret_val, output = run_shell_cmd(
-        f"conda create -y -n {env_name}",
+        f'conda create -y -n {env_name} "python<3.9"',
     )
     if ret_val != 0:
         raise ResolosException(

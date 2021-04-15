@@ -1,16 +1,8 @@
 from click.testing import CliRunner
-from resolos.interface import (
-    res,
-    res_job,
-    res_job_run,
-    res_job_list,
-    res_job_cancel,
-    res_job_status,
-)
+from resolos.interface import res
 from tests.common import verify_result, fake_ssh_cmd, fake_shell_cmd
 from unittest.mock import patch
 from pytest import mark
-from resolos.exception import LocalCommandError
 import logging
 from pathlib import Path
 
