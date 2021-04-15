@@ -7,7 +7,7 @@ from .config import (
     get_project_remote_dict_config,
     in_resolos_dir,
 )
-from .platform import get_arch, get_user_platform, in_home_folder
+from .platform import get_arch, get_user_platform, in_home_folder, find_resolos_dir
 from .remote import list_remote_ids, read_remote_db, get_remote
 from .conda import (
     check_conda_env_exists_local,
@@ -15,14 +15,21 @@ from .conda import (
     create_conda_env_local,
     create_conda_env_remote,
     sync_env_and_files,
+    execute_local_conda_command,
 )
 from .archive import load_archive
 import click
 from .version import __version__
+import shutil
 
 
 def init_project(
-    source=None, local_env_name=None, remote_env_name=None, remote_files_path=None, create_conda_envs=False
+    source=None,
+    local_env_name=None,
+    remote_env_name=None,
+    remote_files_path=None,
+    yes_to_all=False,
+    no_to_remote_setup=False,
 ):
     if in_resolos_dir():
         clog.warning(
@@ -61,16 +68,13 @@ def init_project(
             }
             get_project_dict_config().write(project_config)
             if not check_conda_env_exists_local(env_name):
-                if not create_conda_envs:
-                    if click.confirm(
-                        f"Local conda environment '{env_name}' does not exists yet. "
-                        f"Do you want to create it now?",
-                        default=True,
-                    ):
-                        create_conda_env_local(env_name)
-                else:
+                if yes_to_all or click.confirm(
+                    f"Local conda environment '{env_name}' does not exists yet. "
+                    f"Do you want to create it now?",
+                    default=True,
+                ):
                     create_conda_env_local(env_name)
-                clog.info(f"Local conda env successfully created")
+                    clog.info(f"Local conda env successfully created")
             else:
                 clog.info(
                     f"Local conda environment '{env_name}' already exists, continuing..."
@@ -78,12 +82,11 @@ def init_project(
         project_remote_config = {}
         remote_db = read_remote_db()
         remote_ids = list_remote_ids(remote_db)
-        num_remote_ids = len(remote_ids)
         for remote_id in remote_ids:
             if remote_env_name is None:
                 clog.info(
                     f"No remote conda env name was specified, "
-                    f"will use the local env's name '{env_name}' on the remote as well"
+                    f"will use the local env's name '{env_name}' on the remote '{remote_id}' as well"
                 )
             else:
                 env_name = remote_env_name
@@ -96,32 +99,38 @@ def init_project(
                 "files_path": files_path,
             }
             get_project_remote_dict_config().write(project_remote_config)
-            if num_remote_ids == 1:
+            if no_to_remote_setup:
                 clog.info(
-                    f"Detected only one configured remote '{remote_id}', "
-                    f"checking the existence of the remote conda environment '{env_name}'..."
+                    f"Skipped environment and project files configuration on remote '{remote_id}'"
                 )
+            else:
                 remote_settings = get_remote(remote_db, remote_id)
-                if not check_conda_env_exists_remote(remote_settings, env_name):
-                    if not create_conda_envs:
-                        if click.confirm(
-                            f"Remote conda environment '{env_name}' does not exists yet. "
-                            f"Do you want to create it now?",
-                            default=True,
-                        ):
-                            create_conda_env_remote(remote_settings, env_name)
-                    else:
-                        create_conda_env_remote(remote_settings, env_name)
-                    clog.info(f"Remote conda env successfully created")
-                    if not create_conda_envs:
-                        if click.confirm(
-                            f"Do you want to sync the project to the remote now?",
-                            default=True,
-                        ):
-                            sync_env_and_files(remote_settings)
-                    else:
-                        sync_env_and_files(remote_settings)
-                else:
+                if yes_to_all or click.confirm(
+                    f"Do you want to sync the project files and the conda environment to remote '{remote_id}' now?",
+                    default=True,
+                ):
+                    sync_env_and_files(remote_settings)
                     clog.info(
-                        f"Remote conda environment '{env_name}' already exists, continuing..."
+                        f"Project files and environment successfully synced to remote '{remote_id}'"
                     )
+
+
+def teardown(skip_local=True, skip_remotes=True):
+    if skip_remotes:
+        clog.info("Skipped teardown of remote environment(s)")
+    else:
+        # TODO: Implement proper deletion for remotes as well
+        pass
+    if skip_local:
+        clog.info("Skipped teardown of local environment")
+    else:
+        pc = get_project_dict_config().read()
+        env_name = pc.get("env_name")
+        if env_name:
+            execute_local_conda_command(f"env remove --name {env_name}")
+            clog.info(f"Removed local environment {env_name}")
+        else:
+            clog.info(f"No linked local environment was found to be deleted")
+        resolos_dir = find_resolos_dir()
+        shutil.rmtree(resolos_dir)
+        clog.info(f"Removed folder {resolos_dir}")
