@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 @patch("resolos.check.run_ssh_cmd", wraps=fake_ssh_cmd)
 @patch("resolos.job.run_ssh_cmd", wraps=fake_ssh_cmd)
 @mark.usefixtures("class_proj")
+@mark.usefixtures("test_remote")
 class TestJob:
     def test_job_run(self, *args):
         runner = CliRunner()

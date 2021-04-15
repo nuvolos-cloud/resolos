@@ -1,5 +1,5 @@
 from click.testing import CliRunner
-from resolos.interface import res_init, res_teardown
+from resolos.interface import res_init, res_teardown, res_remote_add, res_remote_remove
 from tests.common import verify_result
 from pytest import fixture
 import os
@@ -23,3 +23,16 @@ def class_proj(request):
         shutil.rmtree(t)
     except (OSError, IOError):  # noqa: B014
         pass
+
+
+@fixture(scope="class")
+def test_remote(request):
+    # Creates a test remote for the class
+    runner = CliRunner()
+    verify_result(
+        runner.invoke(
+            res_remote_add, ["test_remote_id", "-h", "hostname", "-u", "username"]
+        )
+    )
+    yield
+    verify_result(runner.invoke(res_remote_remove, ["test_remote_id"]))
