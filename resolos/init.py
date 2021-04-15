@@ -74,7 +74,7 @@ def init_project(
                     default=True,
                 ):
                     create_conda_env_local(env_name)
-                clog.info(f"Local conda env successfully created")
+                    clog.info(f"Local conda env successfully created")
             else:
                 clog.info(
                     f"Local conda environment '{env_name}' already exists, continuing..."
@@ -82,12 +82,11 @@ def init_project(
         project_remote_config = {}
         remote_db = read_remote_db()
         remote_ids = list_remote_ids(remote_db)
-        num_remote_ids = len(remote_ids)
         for remote_id in remote_ids:
             if remote_env_name is None:
                 clog.info(
                     f"No remote conda env name was specified, "
-                    f"will use the local env's name '{env_name}' on the remote as well"
+                    f"will use the local env's name '{env_name}' on the remote '{remote_id}' as well"
                 )
             else:
                 env_name = remote_env_name
@@ -100,34 +99,19 @@ def init_project(
                 "files_path": files_path,
             }
             get_project_remote_dict_config().write(project_remote_config)
-            if num_remote_ids == 1:
+            if no_to_remote_setup:
                 clog.info(
-                    f"Detected only one configured remote '{remote_id}', "
-                    f"checking the existence of the remote conda environment '{env_name}'..."
+                    f"Skipped environment and project files configuration on remote '{remote_id}'"
                 )
+            else:
                 remote_settings = get_remote(remote_db, remote_id)
-                if not check_conda_env_exists_remote(remote_settings, env_name):
-                    if not no_to_remote_setup:
-                        if yes_to_all or click.confirm(
-                            f"Remote conda environment '{env_name}' does not exists yet. "
-                            f"Do you want to create it now?",
-                            default=True,
-                        ):
-                            create_conda_env_remote(remote_settings, env_name)
-                            clog.info(f"Remote conda env successfully created")
-                    else:
-                        clog.info(f"Skipped remote environment creation")
-                    if not no_to_remote_setup:
-                        if yes_to_all or click.confirm(
-                            f"Do you want to sync the project to the remote now?",
-                            default=True,
-                        ):
-                            sync_env_and_files(remote_settings)
-                    else:
-                        clog.info(f"Skipped remote environment syncing")
-                else:
+                if yes_to_all or click.confirm(
+                    f"Do you want to sync the project files and the conda environment to remote '{remote_id}' now?",
+                    default=True,
+                ):
+                    sync_env_and_files(remote_settings)
                     clog.info(
-                        f"Remote conda environment '{env_name}' already exists, continuing..."
+                        f"Project files and environment successfully synced to remote '{remote_id}'"
                     )
 
 

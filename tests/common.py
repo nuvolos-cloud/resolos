@@ -37,12 +37,39 @@ def fake_ssh_cmd(
     elif "unison -version" in cmd:
         return 0, echo("unison version 2.51.3")
     elif ".ssh/authorized_keys" in cmd:
-        return 0, echo("Successfully set up SSH access on remote")
+        return 0, echo("[mock] Successfully set up SSH access on remote")
+    elif "mkdir -p" in cmd:
+        return 0, echo("[mock] Successfully created new folder structure on the remote")
     elif "conda install" in cmd:
-        return 0, echo("Successfully installed packages on the remote")
+        return 0, echo("[mock] Successfully installed packages on the remote")
     elif "conda uninstall" in cmd:
-        return 0, echo("Successfully uninstalled packages on the remote")
+        return 0, echo("[mock] Successfully uninstalled packages on the remote")
+    elif "sbatch --wrap" in cmd:
+        return 0, echo("[mock] Successfully submitted sbatch wrap job on the remote")
+    elif "sbatch" in cmd:
+        return 0, echo("[mock] Successfully submitted sbatch script on the remote")
+    elif "scontrol show jobid" in cmd:
+        return 0, echo("[mock] Successfully showed job details on the remote")
+    elif "squeue" in cmd:
+        return 0, echo("[mock] Successfully listed jobs on the remote")
+    elif "scancel" in cmd:
+        return 0, echo("[mock] Successfully cancelled job on the remote")
     elif "conda activate" in cmd:
-        return 0, echo("Successfully activated conda environment on the remote")
+        return 0, echo("[mock] Successfully activated conda environment on the remote")
     else:
-        return 1, echo(f"Missing mock implementation for command: '{cmd}'")
+        return 1, echo(f"Missing mock implementation for ssh command: '{cmd}'")
+
+
+def fake_shell_cmd(
+    cmd,
+    max_wait_secs: int = 3600,
+    sleep_secs: int = 1,
+    stdout_as_info=False,
+    shell_type="bash_interactive_login",
+):
+    if "unison -version" in cmd:
+        return 0, echo("unison version 2.51.3")
+    elif "export UNISON=" in cmd:
+        return 0, echo("[mock] Successfully ran unison command")
+    else:
+        return 1, echo(f"Missing mock implementation for shell command: '{cmd}'")
