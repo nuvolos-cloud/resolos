@@ -18,7 +18,7 @@ jobs:
 
       - name: Setup SLURM-in-docker cluster
         run: |
-         docker-compose -f tests/integration/docker-compose.yaml
+         docker-compose -f tests/integration/docker-compose.yaml up -d
          docker exec slurmctld bash -c 'yum –y install openssh-server openssh-clients'
          docker exec slurmctld bash -c 'ssh-keygen -A'
          docker exec slurmctld bash -c '/usr/sbin/sshd'
