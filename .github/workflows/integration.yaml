@@ -18,8 +18,8 @@ jobs:
       - name: Pull and checkout branch
         uses: actions/checkout@master
 
-      -name: Setup SLURM-in-docker cluster
-       run: |
+      - name: Setup SLURM-in-docker cluster
+        run: |
          docker-compose -f tests/integration/docker-compose.yaml
          docker exec slurmctld bash -c 'yum –y install openssh-server openssh-clients'
          docker exec slurmctld bash -c 'ssh-keygen -A'
