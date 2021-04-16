@@ -10,8 +10,12 @@ from resolos.remote import read_remote_db
 from tests.common import verify_result
 import logging
 from pathlib import Path
+import os
+
 
 logger = logging.getLogger(__name__)
+USER = os.environ["TEST_USER"]
+PWD = os.environ["TEST_PASSWORD"]
 
 
 class TestIntegration:
@@ -22,7 +26,9 @@ class TestIntegration:
         with runner.isolated_filesystem() as fs:
             verify_result(
                 runner.invoke(
-                    res_remote_add, [self.remote_id, "-h", "localhost", "-u", ]
+                    res_remote_add,
+                    [self.remote_id, "-h", "localhost", "-u", USER],
+                    input=f"{PWD}\n{PWD}\n{PWD}\n{PWD}\n{PWD}\n"
                 )
             )
             remotes_list = read_remote_db()

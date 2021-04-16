@@ -1,11 +1,9 @@
 name: Integration test with SLURM run manually
 
 on:
-#  release:
-#    branches:
-#      - main
-#    types: [created]
-  workflow_dispatch:
+  push:
+      branches:
+        - salid/integration-test
 jobs:
   ubuntu:
     name: Run pytest on ubuntu-latest
