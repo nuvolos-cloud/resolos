@@ -19,10 +19,6 @@ jobs:
       - name: Setup SLURM-in-docker cluster
         run: |
          docker-compose -f tests/integration/docker-compose.yaml up -d
-         docker exec slurmctld bash -c 'yum –y install openssh-server'
-         docker exec slurmctld bash -c 'yum –y install openssh-clients'
-         docker exec slurmctld bash -c 'ssh-keygen -A'
-         docker exec slurmctld bash -c '/usr/sbin/sshd'
 
          export IPADDR=$(docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' slurmctld)
          pass=$(perl -e 'print crypt($ARGV[0], "password")' "$TEST_PASSWORD")
