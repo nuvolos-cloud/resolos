@@ -1,4 +1,4 @@
-name: Integration test with SLURM upon prerelease
+name: Integration test with SLURM run manually
 
 on:
 #  release:
