@@ -9,7 +9,7 @@ from .conda import (
     get_requirements,
     get_nondep_packages,
 )
-from .exception import LocalCommandError, NotAProjectFolderError
+from .exception import LocalCommandError, NotAProjectFolderError, NotAResolosArchiveError
 from .platform import find_project_dir, get_arch, get_user_platform, find_resolos_dir
 from .config import get_project_dict_config, randomString, DictConfig
 from .shell import run_shell_cmd
@@ -20,6 +20,8 @@ import urllib.request
 import pathlib
 import glob
 import os
+from .version import __version__
+from datetime import datetime
 
 
 PACK_NAME = "env_pack.tar.gz"
@@ -30,6 +32,8 @@ REQUIREMENTS_NAME = "requirements.txt"
 NONDEP_PACKAGES_NAME = "nondep_packages.txt"
 FILES_NAME = "files"
 RESOLOS_FOLDER_NAME = ".resolos"
+TAR_HEADER_RESOLOS_VERSION = "resolos_version"
+TAR_HEADER_CREATED_ON = "created_on"
 
 EXCLUDE_FILES = [".DS_Store", ".tmp"]
 SUPPORTED_REMOTE_PROTOCOLS = ["http", "https", "ftp", "sftp"]
@@ -84,7 +88,11 @@ def make_archive(env_name: str, output_filename: str):
         get_requirements(env_name, filename=requirements_path)
         clog.info(f"Exporting non-dependent packages...")
         get_nondep_packages(env_name, filename=nondep_path)
-        with tarfile.open(output_filename, "w:gz") as tar:
+        pax_headers = {
+            TAR_HEADER_RESOLOS_VERSION: __version__,
+            TAR_HEADER_CREATED_ON: datetime.now().isoformat()
+        }
+        with tarfile.open(output_filename, "w:gz", format=tarfile.PAX_FORMAT, pax_headers=pax_headers) as tar:
             tar.add(files_path, arcname=FILES_NAME, filter=filter_files)
             tar.add(resolos_path, arcname=RESOLOS_FOLDER_NAME, filter=filter_resolos)
             tar.add(pack_absolute_path, arcname=PACK_NAME)
@@ -130,8 +138,13 @@ def load_archive_file(input_filename: str, files_path):
     project_settings = pdc.read()
     old_env_name = project_settings.get("env_name")
     new_env_name = f"resolos_env_{randomString()}"
-    with tarfile.open(input_filename, "r:gz") as tar:
+    with tarfile.open(input_filename, "r:gz", format=tarfile.PAX_FORMAT) as tar:
+        if TAR_HEADER_RESOLOS_VERSION not in tar.pax_headers:
+            raise NotAResolosArchiveError(f"{input_filename} is not an archive created by resolos.")
         clog.info(f"Loading archive...")
+        resolos_version = tar.pax_headers[TAR_HEADER_RESOLOS_VERSION]
+        created_on = tar.pax_headers[TAR_HEADER_CREATED_ON]
+        clog.debug(f"Archive created by resolos version {resolos_version} on {created_on}")
         clean_folder(files_path)
         extract_subfolder(tar, "files", path=str(files_path.absolute()))
         with tempfile.TemporaryDirectory() as tmpdirname:

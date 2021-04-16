@@ -99,3 +99,8 @@ class MissingRemoteEnv(ResolosException):
 class MissingRemoteLocation(ResolosException):
     def __init__(self, msg):
         super().__init__(msg)
+
+
+class NotAResolosArchiveError(ResolosException):
+    def __init__(self, msg):
+        super().__init__(msg)

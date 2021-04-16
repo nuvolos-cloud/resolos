@@ -42,11 +42,6 @@ jobs:
       - name: Pull and checkout branch
         uses: actions/checkout@master
 
-      - name: Install modern bash
-        run: |
-          brew update
-          brew install bash
-
       - name: Setup conda
         uses: conda-incubator/setup-miniconda@v2
         with:

@@ -25,8 +25,6 @@ RESOLOS_PRIVATE_SSH_KEY_LOCATION = "~/.ssh/id_rsa_resolos"
 
 def check_target(target=None, raise_on_error=False):
     if target is None:
-        check_bash_version_local()
-        clog.info(f"PASS - Bash version is sufficiently new")
         check_conda_installed_local()
         clog.info(f"PASS - Conda is installed locally")
         check_unison_installed_local()

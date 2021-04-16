@@ -245,6 +245,12 @@ def res_remote(ctx):
     help="If specified, remote configuration will be skipped (ssh key setup, syncing of project files and environment)",
     required=False,
 )
+@click.option(
+    "-y",
+    is_flag=True,
+    help="If specified, SSH key setup, conda and unison install will happen without confirmation.",
+    required=False,
+)
 @click.pass_context
 def res_remote_add(ctx, **kwargs):
     """
@@ -253,6 +259,7 @@ def res_remote_add(ctx, **kwargs):
     # print(ctx.obj)
     remote_name = kwargs.get("name")
     no_remote_setup = kwargs.get("no_remote_setup", False)
+    no_confirm = kwargs.get("y", False)
     create_dict = {
         "username": kwargs.get("username"),
         "hostname": kwargs.get("hostname"),
@@ -264,7 +271,7 @@ def res_remote_add(ctx, **kwargs):
     add_remote(read_remote_db(), remote_name, create_dict)
     remote_settings = get_remote(read_remote_db(), remote_name)
     if not no_remote_setup:
-        if click.confirm(
+        if no_confirm or click.confirm(
             f"Do you want resolos to use its own SSH key for accessing the remote?",
             default=True,
         ):
@@ -288,7 +295,7 @@ def res_remote_add(ctx, **kwargs):
         get_project_remote_dict_config().write(project_remote_config)
         if not no_remote_setup:
             if not check_conda_env_exists_remote(create_dict, remote_env_name):
-                if click.confirm(
+                if no_confirm or click.confirm(
                     f"Remote conda environment '{remote_env_name}' does not exists yet. "
                     f"Do you want to create it now?",
                     default=True,
