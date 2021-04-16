@@ -32,7 +32,9 @@ services:
       - mysql
 
   slurmctld:
-    image: giovtorres/slurm-docker-cluster
+    build:
+      context: .
+      dockerfile: Dockerfile
     command: ["slurmctld"]
     container_name: slurmctld
     hostname: slurmctld
