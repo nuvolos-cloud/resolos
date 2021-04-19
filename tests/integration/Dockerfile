@@ -9,3 +9,7 @@ RUN set -ex \
     && yum clean all \
     && ssh-keygen -A \
     && /usr/sbin/sshd
+
+EXPOSE 22 6817
+
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]

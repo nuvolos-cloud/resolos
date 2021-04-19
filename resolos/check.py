@@ -93,7 +93,7 @@ def setup_ssh(remote_settings):
             f"Could not find SSH public key {RESOLOS_PRIVATE_SSH_KEY_LOCATION}.pub"
         )
     ret_val, output = run_ssh_cmd(
-        remote_settings, f"mkdir -p .ssh && echo '{pub_key}' >> .ssh/authorized_keys"
+        remote_settings, f"mkdir -p .ssh && echo '{pub_key}' >> .ssh/authorized_keys", force_password=True
     )
     if ret_val != 0:
         raise ShellError(

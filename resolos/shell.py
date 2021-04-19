@@ -140,6 +140,7 @@ def run_ssh_cmd(
     stdout_as_info=False,
     shell_type="bash_login",
     login_shell_remote=True,
+    force_password = False
 ):
     username = remote_settings["username"]
     hostname = remote_settings["hostname"]
@@ -149,7 +150,7 @@ def run_ssh_cmd(
     else:
         remote_cmd = cmd
     ssh_key = get_ssh_key()
-    if ssh_key is None:
+    if ssh_key is None or force_password:
         ssh_cmd = f"ssh {username}@{hostname} -p {port} -o ServerAliveInterval={SSH_SERVERALIVEINTERVAL} {quote(remote_cmd)}"
     else:
         ssh_cmd = f"ssh {username}@{hostname} -p {port} -o ServerAliveInterval={SSH_SERVERALIVEINTERVAL} -i {ssh_key} {quote(remote_cmd)}"
