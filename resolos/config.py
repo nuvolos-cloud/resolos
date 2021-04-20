@@ -24,6 +24,7 @@ import pkgutil
 from .version import __version__
 import re
 from semver import VersionInfo
+from datetime import datetime
 
 
 ver_re = re.compile(r"\d+.\d+.\d+")
@@ -54,6 +55,7 @@ GLOBAL_REMOTE_TEMPLATE = {
 PROJECT_CONFIG_TEMPLATE = {
     "arch": str,
     "env_name": str,
+    "env_initialized": bool,
     "platform": str,
     "project_path": str,
     "resolos_version": str,
@@ -62,7 +64,10 @@ PROJECT_CONFIG_TEMPLATE = {
 
 PROJECT_REMOTE_TEMPLATE = {
     "env_name": str,
+    "env_initialized": bool,
     "files_path": str,
+    "last_files_sync": datetime,
+    "last_env_sync": datetime,
 }
 
 
