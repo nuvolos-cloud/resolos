@@ -2,23 +2,24 @@ from .logging import clog
 from .config import (
     CONDA_LINUX_INSTALLER_URL,
     get_project_remote_dict_config,
-    get_project_dict_config,
     get_project_settings_for_remote,
     get_project_env,
     randomString,
     ver_re,
     CONDA_MIN_VERSION,
+    read_project_remote_config,
+    write_project_remote_config,
 )
 from .exception import MissingDependency, RemoteCommandError, LocalCommandError
-from .shell import run_shell_cmd, run_ssh_cmd, quote
-from .remote import write_dict_to_remote_db
-from .platform import find_project_dir, is_linux_64, get_python_version
-from .exception import NotAProjectFolderError, ResolosException, DependencyVersionError
+from .shell import run_shell_cmd, run_ssh_cmd
+from .platform import find_project_dir, is_linux_64
+from .exception import ResolosException, DependencyVersionError, SSHError
 from .unison import sync_files
 import pathlib
 import json
 import ast
 from semver import VersionInfo
+from datetime import datetime
 
 
 def verify_conda_version(output):
@@ -460,7 +461,6 @@ def sync_env_and_files(remote_settings):
         explicit_package_list(local_env, filename=explicit_packages_file)
         clog.info(f"Syncing project files...")
         sync_files(remote_settings)
-        clog.info(f"Successfully synced project files")
         if not check_conda_env_exists_remote(remote_settings, remote_env):
             create_conda_env_remote(remote_settings, remote_env)
         try:
@@ -468,6 +468,9 @@ def sync_env_and_files(remote_settings):
                 f"install --name {remote_env} --file {remote_path}/.env/spec-file.txt",
                 remote_settings,
             )
+            project_remote_settings = read_project_remote_config(remote_id)
+            project_remote_settings["last_env_sync"] = datetime.utcnow()
+            write_project_remote_config(remote_id, project_remote_settings)
         except RemoteCommandError as ex:
             clog.info(
                 f"Failed to sync conda env to remote '{remote_id}' using explicit packages list, "
@@ -477,21 +480,24 @@ def sync_env_and_files(remote_settings):
             pack_conda_env(local_env, pack_file)
             sync_files(remote_settings)
             remote_env_name = f"resolos_env_{randomString()}"
-            run_ssh_cmd(
+            ret_val, output = run_ssh_cmd(
                 remote_settings,
                 f"mkdir -p ./.resolos/envs/{remote_env_name} && "
                 f"tar -xzf {remote_path}/.env/conda_pack.tar.gz -C ./.resolos/envs/{remote_env_name} && "
                 f"source ./.resolos/envs/{remote_env_name}/bin/activate && "
                 f"conda-unpack",
             )
-            prdc = get_project_remote_dict_config()
-            project_remote_config = prdc.read()
-            if remote_id not in project_remote_config:
-                project_remote_config[remote_id] = {}
-            project_remote_config[remote_id][
+            if ret_val != 0:
+                raise RemoteCommandError(
+                    f"Could not use conda-pack to sync the environment to the remote, "
+                    f"the error message was:\n{output}\n"
+                )
+            project_remote_settings = read_project_remote_config(remote_id)
+            project_remote_settings[
                 "env_name"
             ] = f"source ./.resolos/envs/{remote_env_name}/bin/activate"
-            prdc.write(project_remote_config)
+            project_remote_settings["last_env_sync"] = datetime.utcnow()
+            write_project_remote_config(remote_id, project_remote_settings)
     else:
         clog.info(
             f"The local machine has a different platform or OS as the remote (linux, x86_64), will use the environment "
@@ -503,12 +509,14 @@ def sync_env_and_files(remote_settings):
         export_conda_env(local_env, filename=env_history_file)
         clog.info("Syncing project files...")
         sync_files(remote_settings)
-        clog.info(f"Successfully synced project files")
         try:
             execute_remote_conda_command(
                 f"env update -n {remote_env} -f {remote_path}/.env/env.yaml",
                 remote_settings,
             )
+            project_remote_settings = read_project_remote_config(remote_id)
+            project_remote_settings["last_env_sync"] = datetime.utcnow()
+            write_project_remote_config(remote_id, project_remote_settings)
         except RemoteCommandError as ex:
             clog.info(
                 f"Failed to sync conda env to remote '{remote_id}' using complete environment description, "
@@ -519,6 +527,9 @@ def sync_env_and_files(remote_settings):
                     f"env update -n {remote_env} -f {remote_path}/.env/env_from_history.yaml",
                     remote_settings,
                 )
+                project_remote_settings = read_project_remote_config(remote_id)
+                project_remote_settings["last_env_sync"] = datetime.utcnow()
+                write_project_remote_config(remote_id, project_remote_settings)
             except RemoteCommandError:
                 clog.info(
                     f"Failed to sync conda env to remote '{remote_id}' using conda env --from-history, "
@@ -526,3 +537,6 @@ def sync_env_and_files(remote_settings):
                 )
                 nondep_packages = get_nondep_packages(local_env)
                 install_conda_packages(nondep_packages, target=remote_settings)
+                project_remote_settings = read_project_remote_config(remote_id)
+                project_remote_settings["last_env_sync"] = datetime.utcnow()
+                write_project_remote_config(remote_id, project_remote_settings)
