@@ -8,11 +8,17 @@ from .remote import (
 )
 from .logging import clog
 from .check import setup_ssh, check_target
-from .config import get_project_remote_dict_config, randomString
+from .config import (
+    get_project_remote_dict_config,
+    randomString,
+    get_project_settings_for_remote,
+)
 from .conda import check_conda_env_exists_remote, create_conda_env_remote
+from .shell import run_ssh_cmd
 from .platform import find_project_dir
-from .exception import NotAProjectFolderError, ResolosException
+from .exception import NotAProjectFolderError, ResolosException, RemoteCommandError
 import click
+from shlex import quote
 
 
 def add_remote_configuration(**kwargs):
@@ -81,6 +87,8 @@ def add_remote_configuration(**kwargs):
         clog.debug(
             f"Command was not executed from a project folder, no project set up was done"
         )
+    except Exception as ex:
+        clog.info(f"Failed to initialize project on remote, the error was:\n{ex}\n")
 
 
 def update_remote_configuration(**kwargs):
@@ -133,3 +141,37 @@ def update_remote_configuration(**kwargs):
         )
     set_remote(db, remote_id, update_dict)
     clog.info(f"Remote {remote_id} successfully  modified!")
+
+
+def remove_remote_folder(remote_settings, folder):
+    ret_val, output = run_ssh_cmd(
+        remote_settings,
+        f"if [ -d {quote(folder)} ]; then rm -rf {quote(folder)}; fi",
+    )
+    if ret_val != 0:
+        raise RemoteCommandError(
+            f"Could not remove folder '{folder}' on remote, the error message was:\n{output}\n"
+        )
+
+
+def teardown_remote_configuration(**kwargs):
+    remote_id = kwargs.get("name")
+    remote_settings = get_remote(read_remote_db(), remote_id)
+    if click.confirm(
+        f"Do you want to delete the ~/resolos_projects folder on remote '{remote_id}'?",
+        default=True,
+    ):
+        remove_remote_folder(remote_settings, "~/resolos_projects")
+    if click.confirm(
+        f"Do you want to delete the ~/miniconda folder on remote '{remote_id}'?",
+        default=True,
+    ):
+        remove_remote_folder(remote_settings, "~/miniconda")
+    try:
+        remove_remote_folder(remote_settings, "~/.unison")
+    except Exception as ex:
+        clog.warning(
+            f"Could not remove ~/.unison folder, the error message was:\n{ex}\n"
+        )
+    delete_remote(read_remote_db(), remote_id)
+    clog.info(f"Removed remote '{remote_id}'!")
