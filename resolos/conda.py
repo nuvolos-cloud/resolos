@@ -2,7 +2,6 @@ from .logging import clog
 from .config import (
     CONDA_LINUX_INSTALLER_URL,
     get_project_remote_dict_config,
-    get_project_dict_config,
     get_project_settings_for_remote,
     get_project_env,
     randomString,
@@ -10,10 +9,9 @@ from .config import (
     CONDA_MIN_VERSION,
 )
 from .exception import MissingDependency, RemoteCommandError, LocalCommandError
-from .shell import run_shell_cmd, run_ssh_cmd, quote
-from .remote import write_dict_to_remote_db
-from .platform import find_project_dir, is_linux_64, get_python_version
-from .exception import NotAProjectFolderError, ResolosException, DependencyVersionError
+from .shell import run_shell_cmd, run_ssh_cmd
+from .platform import find_project_dir, is_linux_64
+from .exception import ResolosException, DependencyVersionError, SSHError
 from .unison import sync_files
 import pathlib
 import json

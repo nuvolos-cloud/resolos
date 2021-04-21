@@ -3,7 +3,7 @@ from time import sleep
 from shlex import quote
 from .logging import clog
 from .config import get_ssh_key, SSH_SERVERALIVEINTERVAL, BASH_MIN_VERSION, ver_re
-from .exception import ShellError, MissingDependency, DependencyVersionError
+from .exception import ShellError, MissingDependency, DependencyVersionError, SSHError
 from semver import VersionInfo
 
 CMD_BEGIN = "-----------------RESOLOS_BEGIN-----------------"
@@ -153,10 +153,16 @@ def run_ssh_cmd(
         ssh_cmd = f"ssh {username}@{hostname} -p {port} -o ServerAliveInterval={SSH_SERVERALIVEINTERVAL} {quote(remote_cmd)}"
     else:
         ssh_cmd = f"ssh {username}@{hostname} -p {port} -o ServerAliveInterval={SSH_SERVERALIVEINTERVAL} -i {ssh_key} {quote(remote_cmd)}"
-    return run_shell_cmd(
+    ret_val, output = run_shell_cmd(
         ssh_cmd,
         max_wait_secs=max_wait_secs,
         sleep_secs=sleep_secs,
         stdout_as_info=stdout_as_info,
         shell_type=shell_type,
     )
+    if ret_val != 0:
+        if "Could not resolve hostname" in output:
+            raise SSHError(output)
+        elif "Connection refused" in output:
+            raise SSHError(output)
+    return ret_val, output
