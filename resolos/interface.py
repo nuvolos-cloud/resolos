@@ -78,7 +78,7 @@ def res(ctx):
 @click.option(
     "-y",
     is_flag=True,
-    help="If specified, the local/remote conda environment will be created without a confirmation prompt.",
+    help="If specified, no prompts will be displayed to install conda/unison.",
     required=False,
 )
 @click.option(
@@ -98,13 +98,13 @@ def res_init(ctx, **kwargs):
 
     """
 
-    check_target()
+    check_target(no_confirm=kwargs.get("y", False))
     init_project(
         kwargs.get("source"),
         local_env_name=kwargs.get("env_name"),
         remote_env_name=kwargs.get("remote_env_name"),
         remote_files_path=kwargs.get("remote_path"),
-        yes_to_all=kwargs.get("y"),
+        no_confirm=kwargs.get("y", False),
         no_to_remote_setup=kwargs.get("no_remote_setup"),
     )
 
@@ -223,6 +223,12 @@ def res_remote(ctx):
     help="The command that makes the 'conda' command available for the shell",
 )
 @click.option(
+    "--conda-install-path",
+    type=str,
+    default="~",
+    help="The path to install miniconda on the remote, if required",
+)
+@click.option(
     "--unison-path",
     type=str,
     default="./bin/unison",
@@ -266,6 +272,7 @@ def res_remote_add(ctx, **kwargs):
         "port": kwargs.get("port"),
         "scheduler": kwargs.get("scheduler"),
         "conda_load_command": kwargs.get("conda_load_command"),
+        "conda_install_path": kwargs.get("conda_install_path"),
         "unison_path": kwargs.get("unison_path"),
     }
     add_remote(read_remote_db(), remote_name, create_dict)
@@ -277,7 +284,7 @@ def res_remote_add(ctx, **kwargs):
         ):
             setup_ssh(remote_settings)
         clog.info(f"Running checks on new remote '{remote_name}'...")
-        check_target(remote_settings)
+        check_target(remote_settings, no_confirm=no_confirm)
     try:
         project_dir = find_project_dir()
         project_remote_config = get_project_remote_dict_config().read()
@@ -341,6 +348,12 @@ def res_remote_add(ctx, **kwargs):
     help="The command that makes the 'conda' command available for the shell",
 )
 @click.option(
+    "--conda-install-path",
+    type=str,
+    default="~",
+    help="The path to install miniconda on the remote, if required",
+)
+@click.option(
     "--unison-path",
     type=str,
     help="The path of the unison executable on the remote",
@@ -356,18 +369,25 @@ def res_remote_add(ctx, **kwargs):
     type=str,
     help="The path of the project folder on the remote. Will be created if not exists",
 )
+@click.option(
+    "-y",
+    is_flag=True,
+    help="If specified, SSH key setup, conda and unison install will happen without confirmation.",
+    required=False,
+)
 @click.pass_context
 def res_remote_update(ctx, **kwargs):
     """
     Updates existing remote with name 'name' in the Resolos configuration
     """
     remote_id = kwargs["name"]
+    no_confirm = kwargs.get("y", False)
     db = read_remote_db()
     update_dict = update_remote_settings(db, remote_id, **kwargs)
     update_dict["name"] = remote_id
     clog.debug(f"The new remote config is:\n\n{update_dict}")
     clog.info(f"Running checks on remote '{remote_id}'...")
-    check_target(update_dict)
+    check_target(update_dict, no_confirm=no_confirm)
     try:
         project_dir = find_project_dir()
         project_remote_config = get_project_remote_dict_config().read()
@@ -394,7 +414,7 @@ def res_remote_update(ctx, **kwargs):
                 project_remote_settings["files_path"] = kwargs.get("remote_path")
         get_project_remote_dict_config().write(project_remote_config)
         if not check_conda_env_exists_remote(update_dict, remote_env_name):
-            if click.confirm(
+            if no_confirm or click.confirm(
                 f"Remote conda environment '{remote_env_name}' does not exists yet. "
                 f"Do you want to create it now?",
                 default=True,

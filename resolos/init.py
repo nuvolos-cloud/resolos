@@ -28,7 +28,7 @@ def init_project(
     local_env_name=None,
     remote_env_name=None,
     remote_files_path=None,
-    yes_to_all=False,
+    no_confirm=False,
     no_to_remote_setup=False,
 ):
     if in_resolos_dir():
@@ -68,7 +68,7 @@ def init_project(
             }
             get_project_dict_config().write(project_config)
             if not check_conda_env_exists_local(env_name):
-                if yes_to_all or click.confirm(
+                if no_confirm or click.confirm(
                     f"Local conda environment '{env_name}' does not exists yet. "
                     f"Do you want to create it now?",
                     default=True,
@@ -105,7 +105,7 @@ def init_project(
                 )
             else:
                 remote_settings = get_remote(remote_db, remote_id)
-                if yes_to_all or click.confirm(
+                if no_confirm or click.confirm(
                     f"Do you want to sync the project files and the conda environment to remote '{remote_id}' now?",
                     default=True,
                 ):

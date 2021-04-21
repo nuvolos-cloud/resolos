@@ -141,9 +141,9 @@ def create_conda_env_remote(remote_settings, env_name: str):
 def install_conda_remote(remote_settings):
     ret_val, output = run_ssh_cmd(
         remote_settings,
-        f"wget -q {CONDA_LINUX_INSTALLER_URL} -O ~/miniconda.sh "
-        f"&& bash ~/miniconda.sh -b -p ~/miniconda"
-        f"&& rm ~/miniconda.sh",
+        f"wget -q {CONDA_LINUX_INSTALLER_URL} -O {remote_settings['conda_install_path']}/miniconda.sh "
+        f"&& bash {remote_settings['conda_install_path']}/miniconda.sh -b -p {remote_settings['conda_install_path']}/miniconda"
+        f"&& rm {remote_settings['conda_install_path']}/miniconda.sh",
         stdout_as_info=True,
     )
     if ret_val != 0:

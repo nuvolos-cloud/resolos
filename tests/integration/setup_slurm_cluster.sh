@@ -5,6 +5,10 @@ docker-compose -f tests/integration/docker-compose.yaml up -d
 sleep 20
 export pass=$(perl -e 'print crypt($ARGV[0], "password")' "$TEST_PASSWORD")
 docker exec slurmctld bash -c 'useradd -m -p "$0" "$1"' "$pass" "$TEST_USER"
+docker exec c1 bash -c 'useradd -m -p "$0" "$1"' "$pass" "$TEST_USER"
+docker exec c2 bash -c 'useradd -m -p "$0" "$1"' "$pass" "$TEST_USER"
+docker exec slurmctld bash -c 'chmod -R 777 /data'
+docker exec slurmctld bash -c 'chown -R "$0" /data' "$TEST_USER"
 docker exec slurmctld bash -c "/usr/bin/sacctmgr --immediate add cluster name=linux"
 docker-compose -f tests/integration/docker-compose.yaml restart slurmdbd slurmctld
 docker exec slurmctld bash -c '/usr/sbin/sshd'

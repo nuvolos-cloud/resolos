@@ -23,7 +23,7 @@ import os
 RESOLOS_PRIVATE_SSH_KEY_LOCATION = "~/.ssh/id_rsa_resolos"
 
 
-def check_target(target=None, raise_on_error=False):
+def check_target(target=None, raise_on_error=False, no_confirm=False):
     if target is None:
         check_conda_installed_local()
         clog.info(f"PASS - Conda is installed locally")
@@ -36,7 +36,7 @@ def check_target(target=None, raise_on_error=False):
         except MissingDependency as ex:
             if raise_on_error:
                 raise ex
-            elif click.confirm(
+            elif no_confirm or click.confirm(
                 "It seems conda is not available on the remote. "
                 "Do you want to install it now?",
                 default=True,
@@ -48,7 +48,7 @@ def check_target(target=None, raise_on_error=False):
         except MissingDependency as ex:
             if raise_on_error:
                 raise ex
-            elif click.confirm(
+            elif no_confirm or click.confirm(
                 "It seems unison is not available on the remote. "
                 "Do you want to install it now?",
                 default=True,
