@@ -1,7 +1,8 @@
 from .logging import clog
 from .config import (
     UNISON_LINUX_INSTALLER_URL,
-    get_project_remote_dict_config,
+    read_project_remote_config,
+    write_project_remote_config,
     randomString,
     get_ssh_key,
     SSH_SERVERALIVEINTERVAL,
@@ -19,6 +20,7 @@ from .platform import find_project_dir, get_unison_config_folder
 import re
 import click
 from semver import VersionInfo
+from datetime import datetime
 
 
 def unison_base_command():
@@ -114,18 +116,18 @@ def check_unison_connection(remote_settings):
 def sync_files(remote_settings):
     project_dir = find_project_dir()
     remote_id = remote_settings["name"]
-    project_remote_config = get_project_remote_dict_config().read()
-    if project_remote_config.get(remote_id) is None:
-        project_remote_config[remote_id] = {
+    project_remote_settings = read_project_remote_config(remote_id)
+    if project_remote_settings is None:
+        project_remote_settings = {
             "env_name": None,
             "files_path": f"./resolos_projects/{project_dir.name}_{randomString()}",
         }
-        get_project_remote_dict_config().write(project_remote_config)
-    remote_path = project_remote_config[remote_id]["files_path"]
+        write_project_remote_config(remote_id, project_remote_settings)
+    remote_path = project_remote_settings["files_path"]
     if remote_path is None:
         remote_path = f"./resolos_projects/{project_dir.name}_{randomString()}"
-        project_remote_config[remote_id]["files_path"] = remote_path
-        get_project_remote_dict_config().write(project_remote_config)
+        project_remote_settings["files_path"] = remote_path
+        write_project_remote_config(remote_id, project_remote_settings)
     ret_val, output = run_ssh_cmd(
         remote_settings,
         f"mkdir -p {remote_path}",
@@ -139,7 +141,11 @@ def sync_files(remote_settings):
         main_unison_command(remote_settings, project_dir.absolute(), remote_path),
         shell_type="bash_login",
     )
-    if ret_val != 0:
+    if ret_val == 0:
+        project_remote_settings["last_files_sync"] = datetime.utcnow()
+        write_project_remote_config(remote_id, project_remote_settings)
+        clog.info(f"Successfully synced project files")
+    else:
         if re.search("Archive .* is MISSING", output):
             clog.debug(
                 f"Encountered 'Archive missing' unison error, "
@@ -153,6 +159,10 @@ def sync_files(remote_settings):
                 raise RemoteCommandError(
                     f"Could not run sync on remote '{remote_settings['name']}', the error message was:\n\n{output}\n\n"
                 )
+            else:
+                project_remote_settings["last_files_sync"] = datetime.utcnow()
+                write_project_remote_config(remote_id, project_remote_settings)
+                clog.info(f"Successfully synced project files")
         elif re.search("the archives are locked", output):
             clog.info(
                 f"The unison archive files are locked for remote '{remote_settings['name']}'. This can happen "
@@ -172,6 +182,10 @@ def sync_files(remote_settings):
                     raise RemoteCommandError(
                         f"Could not run sync on remote '{remote_settings['name']}', the error message was:\n\n{output}\n\n"
                     )
+                else:
+                    project_remote_settings["last_files_sync"] = datetime.utcnow()
+                    write_project_remote_config(remote_id, project_remote_settings)
+                    clog.info(f"Successfully synced project files")
         elif re.search(
             "Try running once with the fastcheck option set to 'no'", output
         ):
@@ -187,6 +201,10 @@ def sync_files(remote_settings):
                 raise RemoteCommandError(
                     f"Could not run sync on remote '{remote_settings['name']}', the error message was:\n\n{output}\n\n"
                 )
+            else:
+                project_remote_settings["last_files_sync"] = datetime.utcnow()
+                write_project_remote_config(remote_id, project_remote_settings)
+                clog.info(f"Successfully synced project files")
         else:
             raise RemoteCommandError(
                 f"Could not run sync on remote '{remote_settings['name']}', the error message was:\n\n{output}\n\n"

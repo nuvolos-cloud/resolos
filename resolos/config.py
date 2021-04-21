@@ -108,6 +108,20 @@ def get_project_remote_dict_config():
     )
 
 
+def read_project_remote_config(remote_id):
+    return get_project_remote_dict_config().read().get(remote_id)
+
+
+def write_project_remote_config(remote_id, remote_config: dict):
+    prdc = get_project_remote_dict_config()
+    prc = prdc.read()
+    if remote_id in prc:
+        prc[remote_id].update(remote_config)
+    else:
+        prc[remote_id] = remote_config
+    prdc.write(prc)
+
+
 def default_global_configs():
     return {"app_name": "resolos", "ssh_key": None}
 
@@ -183,8 +197,7 @@ def get_project_env():
 
 def get_project_settings_for_remote(remote_id):
     local_env = get_project_env()
-    project_remote_config = get_project_remote_dict_config().read()
-    project_remote_settings = project_remote_config.get(remote_id)
+    project_remote_settings = read_project_remote_config(remote_id)
     if project_remote_settings is None:
         raise MissingProjectRemoteConfig(
             f"Project-level remote settings for remote '{remote_id}' are not defined!"
@@ -195,8 +208,8 @@ def get_project_settings_for_remote(remote_id):
         clog.debug(
             f"Remote env name was missing for remote '{remote_id}', generated new name {remote_env}"
         )
-        project_remote_config[remote_id]["env_name"] = remote_env
-        get_project_remote_dict_config().write(project_remote_config)
+        project_remote_settings["env_name"] = remote_env
+        write_project_remote_config(remote_id, project_remote_settings)
     remote_path = project_remote_settings.get("files_path")
     if remote_path is None:
         raise MissingRemoteLocation(
