@@ -3,7 +3,13 @@ from time import sleep
 from shlex import quote
 from .logging import clog
 from .config import get_ssh_key, SSH_SERVERALIVEINTERVAL, BASH_MIN_VERSION, ver_re
-from .exception import ShellError, MissingDependency, DependencyVersionError, SSHError
+from .exception import (
+    ShellError,
+    MissingDependency,
+    DependencyVersionError,
+    SSHError,
+    RemoteCommandError,
+)
 from semver import VersionInfo
 
 CMD_BEGIN = "-----------------RESOLOS_BEGIN-----------------"
@@ -166,3 +172,14 @@ def run_ssh_cmd(
         elif "Connection refused" in output:
             raise SSHError(output)
     return ret_val, output
+
+
+def remove_remote_folder(remote_settings, folder):
+    ret_val, output = run_ssh_cmd(
+        remote_settings,
+        f"if [ -d {quote(folder)} ]; then rm -rf {quote(folder)}; fi",
+    )
+    if ret_val != 0:
+        raise RemoteCommandError(
+            f"Could not remove folder '{folder}' on remote, the error message was:\n{output}\n"
+        )
