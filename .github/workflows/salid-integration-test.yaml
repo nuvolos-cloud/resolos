@@ -49,7 +49,7 @@ jobs:
           echo "Slurmctld host: $TEST_HOST"
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-          ssh-keyscan -H $TEST_HOST -p 3141 >> ~/.ssh/known_hosts
+          ssh-keyscan -p 3141 $TEST_HOST >> ~/.ssh/known_hosts
           rm -f $HOME/.ssh/id_rsa_resolos
           rm -f $HOME/.ssh/id_rsa_resolos.pub
           echo "Adding unison to path" && export PATH="$(pwd)/bin:$PATH"
