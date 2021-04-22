@@ -43,10 +43,7 @@ jobs:
           docker-compose -f tests/integration/docker-compose.yaml restart slurmdbd slurmctld
           docker exec slurmctld bash -c 'sacctmgr -i add account "$0" cluster=linux description="Resolos integration test user" Organization=resolos' $TEST_USER
           docker exec slurmctld bash -c 'sacctmgr -i add user "$0" account="$0"' $TEST_USER $TEST_USER
-          docker ps
-          docker-compose -f tests/integration/docker-compose.yaml ps
           export TEST_HOST=127.0.0.1
-          echo "Slurmctld host: $TEST_HOST"
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
           docker exec slurmctld bash -c '/usr/sbin/sshd'
@@ -57,7 +54,7 @@ jobs:
           echo "Adding unison to path" && export PATH="$(pwd)/bin:$PATH"
           echo "Unison installed at: $(which unison)"
           echo "Conda version is $(conda --version)"
-          pytest tests/integration/test_integration.py
+          pytest -s -rA tests/integration/test_integration.py
 
       - name: Tear down SLURM cluster
         run: |
