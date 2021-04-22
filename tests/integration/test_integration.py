@@ -33,7 +33,7 @@ class TestIntegration:
             verify_result(
                 runner.invoke(
                     res_remote_add,
-                    [self.remote_id, "-y", "-h", HOST, "-u", USER, "--remote-path", "/data/integration_test", "--conda-install-path", "/data", "--conda-load-command", "source /data/miniconda/bin/activate"]
+                    [self.remote_id, "-y", "-h", HOST, "-p", "3141", "-u", USER, "--remote-path", "/data/integration_test", "--conda-install-path", "/data", "--conda-load-command", "source /data/miniconda/bin/activate"]
                 )
             )
             remotes_list = read_remote_db()

@@ -48,6 +48,8 @@ services:
     expose:
       - "6817"
       - "22"
+    ports:
+      - "3141:22"
     depends_on:
       - "slurmdbd"
 
