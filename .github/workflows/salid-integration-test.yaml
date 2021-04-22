@@ -44,7 +44,7 @@ jobs:
           docker exec slurmctld bash -c 'sacctmgr -i add account "$0" cluster=linux description="Resolos integration test user" Organization=resolos' $TEST_USER
           docker exec slurmctld bash -c 'sacctmgr -i add user "$0" account="$0"' $TEST_USER $TEST_USER
           export TEST_HOST=$(docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' slurmctld)
-          sudo iptables -A OUTPUT -p tcp -d $TEST_HOST --dport 22 -j ACCEPT
+          echo "Slurmctld host: $TEST_HOST"
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
           ssh-keyscan -H $TEST_HOST >> ~/.ssh/known_hosts
