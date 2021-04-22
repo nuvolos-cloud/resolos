@@ -3,7 +3,7 @@ name: Integration test with SLURM run manually
 on:
   push:
       branches:
-        - salid/integration-test
+        - '**release**'
 jobs:
   ubuntu:
     name: Run pytest on ubuntu-latest
