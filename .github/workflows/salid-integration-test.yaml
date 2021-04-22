@@ -47,6 +47,8 @@ jobs:
       - name: Run test suite
         run: |
           export TEST_HOST=$(docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' slurmctld)
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
           ssh-keyscan -H $TEST_HOST >> ~/.ssh/known_hosts
           rm -f $HOME/.ssh/id_rsa_resolos
           rm -f $HOME/.ssh/id_rsa_resolos.pub
