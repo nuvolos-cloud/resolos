@@ -298,6 +298,12 @@ def res_remote_update(ctx, **kwargs):
 
 @res_remote.command("remove")
 @click.argument("name")
+@click.option(
+    "--purge",
+    is_flag=True,
+    help="Removes all synced project files and environments from the remote",
+    required=False,
+)
 @click.pass_context
 def res_remote_remove(ctx, **kwargs):
     """

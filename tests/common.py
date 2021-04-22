@@ -40,6 +40,8 @@ def fake_ssh_cmd(
         return 0, echo("[mock] Successfully set up SSH access on remote")
     elif "mkdir -p" in cmd:
         return 0, echo("[mock] Successfully created new folder structure on the remote")
+    elif "rm -rf" in cmd:
+        return 0, echo("[mock] Successfully deleted folder on the remote")
     elif "conda install" in cmd:
         return 0, echo("[mock] Successfully installed packages on the remote")
     elif "conda uninstall" in cmd:
