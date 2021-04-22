@@ -43,7 +43,8 @@ jobs:
           docker-compose -f tests/integration/docker-compose.yaml restart slurmdbd slurmctld
           docker exec slurmctld bash -c 'sacctmgr -i add account "$0" cluster=linux description="Resolos integration test user" Organization=resolos' $TEST_USER
           docker exec slurmctld bash -c 'sacctmgr -i add user "$0" account="$0"' $TEST_USER $TEST_USER
-          docker-compose ps
+          docker ps
+          docker-compose -f tests/integration/docker-compose.yaml ps
           export TEST_HOST=127.0.0.1
           echo "Slurmctld host: $TEST_HOST"
           mkdir -p ~/.ssh
