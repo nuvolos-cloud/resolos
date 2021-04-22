@@ -15,22 +15,7 @@ jobs:
       
     steps:
       - name: Pull and checkout branch
-        uses: actions/checkout@master
-
-      - name: Setup SLURM-in-docker cluster
-        run: |
-          sudo apt-get install sshpass
-          docker-compose -f tests/integration/docker-compose.yaml up -d
-          sleep 20
-          export pass=$(perl -e 'print crypt($ARGV[0], "password")' "$SSHPASS")
-          docker exec slurmctld bash -c 'useradd -m -p "$0" "$1"' "$pass" "$TEST_USER"
-          docker exec c1 bash -c 'useradd -m -p "$0" "$1"' "$pass" "$TEST_USER"
-          docker exec c2 bash -c 'useradd -m -p "$0" "$1"' "$pass" "$TEST_USER"
-          docker exec slurmctld bash -c 'chmod -R 777 /data'
-          docker exec slurmctld bash -c "/usr/bin/sacctmgr --immediate add cluster name=linux"
-          docker-compose -f tests/integration/docker-compose.yaml restart slurmdbd slurmctld
-          docker exec slurmctld bash -c 'sacctmgr -i add account "$0" cluster=linux description="Resolos integration test user" Organization=resolos' $TEST_USER
-          docker exec slurmctld bash -c 'sacctmgr -i add user "$0" account="$0"' $TEST_USER $TEST_USER
+        uses: actions/checkout@master         
 
       - name: Install dependencies
         run: |
@@ -46,7 +31,20 @@ jobs:
 
       - name: Run test suite
         run: |
+          sudo apt-get install sshpass
+          docker-compose -f tests/integration/docker-compose.yaml up -d
+          sleep 20
+          export pass=$(perl -e 'print crypt($ARGV[0], "password")' "$SSHPASS")
+          docker exec slurmctld bash -c 'useradd -m -p "$0" "$1"' "$pass" "$TEST_USER"
+          docker exec c1 bash -c 'useradd -m -p "$0" "$1"' "$pass" "$TEST_USER"
+          docker exec c2 bash -c 'useradd -m -p "$0" "$1"' "$pass" "$TEST_USER"
+          docker exec slurmctld bash -c 'chmod -R 777 /data'
+          docker exec slurmctld bash -c "/usr/bin/sacctmgr --immediate add cluster name=linux"
+          docker-compose -f tests/integration/docker-compose.yaml restart slurmdbd slurmctld
+          docker exec slurmctld bash -c 'sacctmgr -i add account "$0" cluster=linux description="Resolos integration test user" Organization=resolos' $TEST_USER
+          docker exec slurmctld bash -c 'sacctmgr -i add user "$0" account="$0"' $TEST_USER $TEST_USER
           export TEST_HOST=$(docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' slurmctld)
+          sudo iptables -A OUTPUT -p tcp -d $TEST_HOST --dport 22 -j ACCEPT
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
           ssh-keyscan -H $TEST_HOST >> ~/.ssh/known_hosts
