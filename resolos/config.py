@@ -140,6 +140,7 @@ def generate_default_remote_config():
 
 def generate_unison_folder():
     unison_folder = get_unison_config_folder()
+    clog.debug(f"Initializing unison folder in {unison_folder}")
     target_unison_prf = unison_folder / ("default.prf")
     if not target_unison_prf.exists():
         clog.debug(f"Creating default unison preferences file {target_unison_prf}")

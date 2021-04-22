@@ -15,7 +15,7 @@ import os
 
 logger = logging.getLogger(__name__)
 USER = os.environ["TEST_USER"]
-PWD = os.environ["TEST_PASSWORD"]
+PWD = os.environ["SSHPASS"]
 HOST = os.environ["TEST_HOST"]
 
 class TestIntegration:
@@ -26,17 +26,14 @@ class TestIntegration:
         with runner.isolated_filesystem() as fs:
             # Initialize a new local project
             logger.info(f"Initializing new project in {fs}")
+            verify_result(runner.invoke(res, ["-v", "DEBUG", "info"]))
             verify_result(runner.invoke(res_init, ["-y"]))
             # Add remote
-            input = ""
-            for i in range(5):
-                input += f"{PWD}\n"
             logger.info(f"### Adding remote in {fs}")
             verify_result(
                 runner.invoke(
                     res_remote_add,
-                    [self.remote_id, "-y", "-h", HOST, "-u", USER, "--remote-path", "/data/integration_test", "--conda-install-path", "/data", "--conda-load-command", "source /data/miniconda/bin/activate"],
-                    input=input
+                    [self.remote_id, "-y", "-h", HOST, "-u", USER, "--remote-path", "/data/integration_test", "--conda-install-path", "/data", "--conda-load-command", "source /data/miniconda/bin/activate"]
                 )
             )
             remotes_list = read_remote_db()
@@ -49,11 +46,13 @@ class TestIntegration:
                 py.write("""with open('test_output.txt', 'w') as txtf:
     txtf.write('Hello, world!')""")
             logger.info(f"### Syncing with remote {self.remote_id}")
-            verify_result(runner.invoke(res_sync, ["-r", self.remote_id], input=input))
+            verify_result(runner.invoke(res_sync, ["-r", self.remote_id]))
             logger.info(f"### Running test job on {self.remote_id}")
-            verify_result(runner.invoke(res, ["-v", "DEBUG", "job", "-r", self.remote_id, "run", "-p", "normal", "python test_script.py"], input=input))
+            verify_result(runner.invoke(res, ["-v", "DEBUG", "job", "-r", self.remote_id, "run", "-p", "normal", "python test_script.py"]))
+            # Sync back job results
             logger.info(f"### Syncing results from remote {self.remote_id}")
-            verify_result(runner.invoke(res_sync, ["-r", self.remote_id], input=input))
+            verify_result(runner.invoke(res_sync, ["-r", self.remote_id]))
             assert (Path(fs) / "test_output.txt").exists()
+            # Remove remote
             logger.info(f"### Removing remote {self.remote_id}")
             verify_result(runner.invoke(res_remote_remove, [self.remote_id]))
