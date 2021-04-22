@@ -1,11 +1,6 @@
 import click
-from .platform import find_project_dir
 from .config import (
     initialize_user_configs,
-    get_default_config_path,
-    randomString,
-    get_project_dict_config,
-    get_project_remote_dict_config,
     get_project_env,
     get_project_settings_for_remote,
     info,
@@ -14,13 +9,14 @@ import click_logging
 from .logging import clog
 from .remote import (
     get_remote,
-    delete_remote,
     list_remote_ids,
     read_remote_db,
-    update_remote_settings,
-    set_remote,
 )
-from .remote_configuration import add_remote_configuration, update_remote_configuration
+from .remote_configuration import (
+    add_remote_configuration,
+    update_remote_configuration,
+    teardown_remote_configuration,
+)
 from .check import check_target, check, setup_ssh
 from .unison import sync_files
 from .conda import (
@@ -28,12 +24,10 @@ from .conda import (
     install_conda_packages,
     uninstall_conda_packages,
     sync_env_and_files,
-    check_conda_env_exists_remote,
-    create_conda_env_remote,
 )
 from .archive import make_archive, load_archive
 from .job import job_cancel, job_list, job_status, job_submit, job_run
-from .exception import NoRemotesError, NotAProjectFolderError
+from .exception import NoRemotesError
 from .init import init_project, teardown
 import yaml
 
@@ -304,13 +298,18 @@ def res_remote_update(ctx, **kwargs):
 
 @res_remote.command("remove")
 @click.argument("name")
+@click.option(
+    "--purge",
+    is_flag=True,
+    help="Removes all synced project files and environments from the remote",
+    required=False,
+)
 @click.pass_context
 def res_remote_remove(ctx, **kwargs):
     """
     Removes the remote from the Resolos configuration
     """
-    delete_remote(read_remote_db(), kwargs.get("name"))
-    clog.info(f"Removed remote {kwargs.get('name')}!")
+    teardown_remote_configuration(**kwargs)
 
 
 @res_remote.command("list")

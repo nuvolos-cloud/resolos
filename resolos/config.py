@@ -195,7 +195,7 @@ def get_project_env():
     return local_env
 
 
-def get_project_settings_for_remote(remote_id):
+def get_project_settings_for_remote(remote_id, generate_env_if_missing=True):
     local_env = get_project_env()
     project_remote_settings = read_project_remote_config(remote_id)
     if project_remote_settings is None:
@@ -203,7 +203,7 @@ def get_project_settings_for_remote(remote_id):
             f"Project-level remote settings for remote '{remote_id}' are not defined!"
         )
     remote_env = project_remote_settings.get("env_name")
-    if remote_env is None:
+    if remote_env is None and generate_env_if_missing:
         remote_env = f"resolos_env_{randomString()}"
         clog.debug(
             f"Remote env name was missing for remote '{remote_id}', generated new name {remote_env}"

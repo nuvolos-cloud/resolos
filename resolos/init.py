@@ -6,9 +6,11 @@ from .config import (
     get_project_dict_config,
     get_project_remote_dict_config,
     in_resolos_dir,
+    get_project_settings_for_remote,
 )
 from .platform import get_arch, get_user_platform, in_home_folder, find_resolos_dir
 from .remote import list_remote_ids, read_remote_db, get_remote
+from .shell import remove_remote_folder
 from .conda import (
     check_conda_env_exists_local,
     check_conda_env_exists_remote,
@@ -16,6 +18,7 @@ from .conda import (
     create_conda_env_remote,
     sync_env_and_files,
     execute_local_conda_command,
+    execute_remote_conda_command,
 )
 from .archive import load_archive
 import click
@@ -152,8 +155,26 @@ def teardown(skip_local=True, skip_remotes=True):
     if skip_remotes:
         clog.info("Skipped teardown of remote environment(s)")
     else:
-        # TODO: Implement proper deletion for remotes as well
-        pass
+        remote_db = read_remote_db()
+        remote_ids = list_remote_ids(remote_db)
+        for remote_id in remote_ids:
+            remote_settings = get_remote(remote_db, remote_id)
+            local_env, remote_env, remote_path = get_project_settings_for_remote(
+                remote_id, generate_env_if_missing=False
+            )
+            if click.confirm(
+                f"Do you want to delete synced project files and environment on remote '{remote_id}'?",
+                default=True,
+            ):
+                if remote_env:
+                    execute_remote_conda_command(
+                        f"env remove --name {remote_env}", remote_settings
+                    )
+                    clog.info(f"Removed remote env '{remote_env}'")
+                else:
+                    clog.info(f"Found no configured remote env to remove")
+                remove_remote_folder(remote_settings, remote_path)
+                clog.info(f"Removed project files folder '{remote_path}'")
     if skip_local:
         clog.info("Skipped teardown of local environment")
     else:

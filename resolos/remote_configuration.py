@@ -8,8 +8,12 @@ from .remote import (
 )
 from .logging import clog
 from .check import setup_ssh, check_target
-from .config import get_project_remote_dict_config, randomString
+from .config import (
+    get_project_remote_dict_config,
+    randomString,
+)
 from .conda import check_conda_env_exists_remote, create_conda_env_remote
+from .shell import remove_remote_folder
 from .platform import find_project_dir
 from .exception import NotAProjectFolderError, ResolosException
 import click
@@ -81,6 +85,8 @@ def add_remote_configuration(**kwargs):
         clog.debug(
             f"Command was not executed from a project folder, no project set up was done"
         )
+    except Exception as ex:
+        clog.info(f"Failed to initialize project on remote, the error was:\n{ex}\n")
 
 
 def update_remote_configuration(**kwargs):
@@ -133,3 +139,20 @@ def update_remote_configuration(**kwargs):
         )
     set_remote(db, remote_id, update_dict)
     clog.info(f"Remote {remote_id} successfully  modified!")
+
+
+def teardown_remote_configuration(**kwargs):
+    remote_id = kwargs.get("name")
+    purge = kwargs.get("purge")
+    remote_settings = get_remote(read_remote_db(), remote_id)
+    if purge:
+        remove_remote_folder(remote_settings, "~/resolos_projects")
+        remove_remote_folder(remote_settings, "~/miniconda")
+    try:
+        remove_remote_folder(remote_settings, "~/.unison")
+    except Exception as ex:
+        clog.warning(
+            f"Could not remove ~/.unison folder, the error message was:\n{ex}\n"
+        )
+    delete_remote(read_remote_db(), remote_id)
+    clog.info(f"Removed remote '{remote_id}'!")
