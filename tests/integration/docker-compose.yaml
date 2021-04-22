@@ -1,4 +1,4 @@
-version: "2.2"
+version: "3.7"
 
 services:
   mysql:
@@ -49,7 +49,7 @@ services:
       - "6817"
       - "22"
     ports:
-      - "3141:22"
+      - "3144:22"
     depends_on:
       - "slurmdbd"
 

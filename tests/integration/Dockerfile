@@ -7,7 +7,7 @@ RUN set -ex \
        openssh-server \
        openssh-clients \
     && yum clean all \
-    && ssh-keygen -A \
+    && ssh-keygen -A
 
 EXPOSE 22 6817
 
