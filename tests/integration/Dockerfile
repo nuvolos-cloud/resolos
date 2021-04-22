@@ -7,8 +7,9 @@ RUN set -ex \
        openssh-server \
        openssh-clients \
     && yum clean all \
-    && ssh-keygen -A
+    && ssh-keygen -A \
+    && /usr/sbin/sshd
 
 EXPOSE 22 6817
 
-CMD ["/usr/sbin/sshd","-D"]
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]

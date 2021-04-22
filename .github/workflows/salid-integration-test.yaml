@@ -49,6 +49,8 @@ jobs:
           echo "Slurmctld host: $TEST_HOST"
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
+          sudo iptables-save
+          docker exec slurmctld bash -c 'ps -aux'
           ssh-keyscan -p 3144 $TEST_HOST >> ~/.ssh/known_hosts
           rm -f $HOME/.ssh/id_rsa_resolos
           rm -f $HOME/.ssh/id_rsa_resolos.pub
