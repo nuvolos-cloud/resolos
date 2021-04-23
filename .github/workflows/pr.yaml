@@ -66,4 +66,4 @@ jobs:
           echo "Activating test environment"
           conda activate test
           echo "Conda version is $(conda --version)"
-          pytest --ignore integration/
+          pytest --ignore=tests/integration/
