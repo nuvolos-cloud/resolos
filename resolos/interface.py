@@ -1,11 +1,6 @@
 import click
-from .platform import find_project_dir
 from .config import (
     initialize_user_configs,
-    get_default_config_path,
-    randomString,
-    get_project_dict_config,
-    get_project_remote_dict_config,
     get_project_env,
     get_project_settings_for_remote,
     info,
@@ -14,12 +9,13 @@ import click_logging
 from .logging import clog
 from .remote import (
     get_remote,
-    add_remote,
-    delete_remote,
     list_remote_ids,
     read_remote_db,
-    update_remote_settings,
-    set_remote,
+)
+from .remote_configuration import (
+    add_remote_configuration,
+    update_remote_configuration,
+    teardown_remote_configuration,
 )
 from .check import check_target, check, setup_ssh
 from .unison import sync_files
@@ -28,12 +24,10 @@ from .conda import (
     install_conda_packages,
     uninstall_conda_packages,
     sync_env_and_files,
-    check_conda_env_exists_remote,
-    create_conda_env_remote,
 )
 from .archive import make_archive, load_archive
 from .job import job_cancel, job_list, job_status, job_submit, job_run
-from .exception import NoRemotesError, NotAProjectFolderError
+from .exception import NoRemotesError
 from .init import init_project, teardown
 import yaml
 
@@ -262,64 +256,7 @@ def res_remote_add(ctx, **kwargs):
     """
     Adds a new remote with name 'name' to the Resolos configuration
     """
-    # print(ctx.obj)
-    remote_name = kwargs.get("name")
-    no_remote_setup = kwargs.get("no_remote_setup", False)
-    no_confirm = kwargs.get("y", False)
-    create_dict = {
-        "username": kwargs.get("username"),
-        "hostname": kwargs.get("hostname"),
-        "port": kwargs.get("port"),
-        "scheduler": kwargs.get("scheduler"),
-        "conda_load_command": kwargs.get("conda_load_command"),
-        "conda_install_path": kwargs.get("conda_install_path"),
-        "unison_path": kwargs.get("unison_path"),
-    }
-    add_remote(read_remote_db(), remote_name, create_dict)
-    remote_settings = get_remote(read_remote_db(), remote_name)
-    if not no_remote_setup:
-        if no_confirm or click.confirm(
-            f"Do you want resolos to use its own SSH key for accessing the remote?",
-            default=True,
-        ):
-            setup_ssh(remote_settings)
-        clog.info(f"Running checks on new remote '{remote_name}'...")
-        check_target(remote_settings, no_confirm=no_confirm)
-    try:
-        project_dir = find_project_dir()
-        project_remote_config = get_project_remote_dict_config().read()
-        files_path = (
-            kwargs.get("remote_path")
-            or f"./resolos_projects/{project_dir.name}_{randomString()}"
-        )
-        remote_env_name = (
-            kwargs.get("remote_env_name") or f"resolos_env_{randomString()}"
-        )
-        project_remote_config[remote_name] = {
-            "env_name": remote_env_name,
-            "files_path": files_path,
-        }
-        get_project_remote_dict_config().write(project_remote_config)
-        if not no_remote_setup:
-            if not check_conda_env_exists_remote(create_dict, remote_env_name):
-                if no_confirm or click.confirm(
-                    f"Remote conda environment '{remote_env_name}' does not exists yet. "
-                    f"Do you want to create it now?",
-                    default=True,
-                ):
-                    create_conda_env_remote(create_dict, remote_env_name)
-            else:
-                clog.info(
-                    f"Remote conda environment '{remote_env_name}' already exists, continuing..."
-                )
-        else:
-            clog.info(f"Skipped setup for remote")
-    except NotAProjectFolderError:
-        clog.debug(
-            f"Command was not executed from a project folder, no project set up was done"
-        )
-    clog.info(f"Remote {remote_name} added!")
-    return
+    add_remote_configuration(**kwargs)
 
 
 @res_remote.command("update")
@@ -380,68 +317,23 @@ def res_remote_update(ctx, **kwargs):
     """
     Updates existing remote with name 'name' in the Resolos configuration
     """
-    remote_id = kwargs["name"]
-    no_confirm = kwargs.get("y", False)
-    db = read_remote_db()
-    update_dict = update_remote_settings(db, remote_id, **kwargs)
-    update_dict["name"] = remote_id
-    clog.debug(f"The new remote config is:\n\n{update_dict}")
-    clog.info(f"Running checks on remote '{remote_id}'...")
-    check_target(update_dict, no_confirm=no_confirm)
-    try:
-        project_dir = find_project_dir()
-        project_remote_config = get_project_remote_dict_config().read()
-        project_remote_settings = project_remote_config.get(remote_id)
-        if project_remote_settings is None:
-            files_path = (
-                kwargs.get("remote_path")
-                or f"./resolos_projects/{project_dir.name}_{randomString()}"
-            )
-            remote_env_name = (
-                kwargs.get("remote_env_name") or f"resolos_env_{randomString()}"
-            )
-            project_remote_config[remote_id] = {
-                "env_name": remote_env_name,
-                "files_path": files_path,
-            }
-        else:
-            if kwargs.get("remote_env_name"):
-                remote_env_name = kwargs.get("remote_env_name")
-                project_remote_settings["env_name"] = remote_env_name
-            else:
-                remote_env_name = project_remote_settings.get("env_name")
-            if kwargs.get("remote_path"):
-                project_remote_settings["files_path"] = kwargs.get("remote_path")
-        get_project_remote_dict_config().write(project_remote_config)
-        if not check_conda_env_exists_remote(update_dict, remote_env_name):
-            if no_confirm or click.confirm(
-                f"Remote conda environment '{remote_env_name}' does not exists yet. "
-                f"Do you want to create it now?",
-                default=True,
-            ):
-                create_conda_env_remote(update_dict, remote_env_name)
-        else:
-            clog.info(
-                f"Remote conda environment '{remote_env_name}' already exists, continuing..."
-            )
-    except NotAProjectFolderError:
-        clog.debug(
-            f"Command was not executed from a project folder, no project set up was done"
-        )
-    set_remote(db, remote_id, update_dict)
-    clog.info(f"Remote {remote_id} successfully  modified!")
-    return
+    update_remote_configuration(**kwargs)
 
 
 @res_remote.command("remove")
 @click.argument("name")
+@click.option(
+    "--purge",
+    is_flag=True,
+    help="Removes all synced project files and environments from the remote",
+    required=False,
+)
 @click.pass_context
 def res_remote_remove(ctx, **kwargs):
     """
     Removes the remote from the Resolos configuration
     """
-    delete_remote(read_remote_db(), kwargs.get("name"))
-    clog.info(f"Removed remote {kwargs.get('name')}!")
+    teardown_remote_configuration(**kwargs)
 
 
 @res_remote.command("list")

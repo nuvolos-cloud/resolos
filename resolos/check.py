@@ -70,6 +70,7 @@ def check(raise_on_error=False):
 def setup_ssh(remote_settings):
     key_location = os.path.expanduser(RESOLOS_PRIVATE_SSH_KEY_LOCATION)
     if not pathlib.Path(key_location).exists():
+        clog.info(f"Generating new SSH key {key_location}")
         ret_val, output = run_shell_cmd(
             f"ssh-keygen -t rsa -N '' -C resolos@{node()} -f ~/.ssh/id_rsa_resolos"
         )
@@ -83,8 +84,10 @@ def setup_ssh(remote_settings):
                 raise MissingDependency(
                     f"Unexpected error with ssh-keygen:\n\n{output}\n\n"
                 )
+    else:
+        clog.info(f"Using SSH key {key_location}")
     clog.info(
-        f"Will set up now remote '{remote_settings['name']}' to accept the new SSH key. "
+        f"Will set up now remote '{remote_settings['name']}' to accept the SSH key {key_location}. "
         f"Please enter your password when prompted"
     )
     ret_val, pub_key = run_shell_cmd(f"cat {RESOLOS_PRIVATE_SSH_KEY_LOCATION}.pub")

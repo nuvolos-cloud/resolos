@@ -21,6 +21,11 @@ class ShellError(ResolosException):
         super().__init__(msg)
 
 
+class SSHError(ResolosException):
+    def __init__(self, msg):
+        super().__init__(msg)
+
+
 class LocalCommandError(ResolosException):
     def __init__(self, msg):
         super().__init__(msg)
