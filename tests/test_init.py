@@ -1,6 +1,6 @@
 from pathlib import Path
 from click.testing import CliRunner
-from resolos.interface import res_init, res_run
+from resolos.interface import res, res_run
 from resolos.shell import run_shell_cmd
 from tests.common import verify_result
 import logging
@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 def test_init_empty():
     runner = CliRunner()
     with runner.isolated_filesystem() as fs:
-        verify_result(runner.invoke(res_init, ["-y"]))
+        verify_result(runner.invoke(res, ["-v", "debug", "init", "-y"]))
 
 
 def test_init_from_archive():
@@ -21,8 +21,11 @@ def test_init_from_archive():
         run_shell_cmd("which python")
         verify_result(
             runner.invoke(
-                res_init,
+                res,
                 [
+                    "-v",
+                    "debug",
+                    "init",
                     "-s",
                     "https://resolos.s3.eu-central-1.amazonaws.com/examples/data_with_pandas.tar.gz",
                 ],

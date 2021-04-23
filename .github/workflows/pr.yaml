@@ -31,7 +31,7 @@ jobs:
           echo "Adding unison to path" && export PATH="$(pwd)/bin:$PATH"
           echo "Unison installed at: $(which unison)"
           echo "Conda version is $(conda --version)"
-          pytest --ignore integration/
+          pytest --ignore=tests/integration/
   macos:
     name: Run pytest on macos-latest
     runs-on: macos-latest

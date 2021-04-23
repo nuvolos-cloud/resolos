@@ -146,6 +146,10 @@ def init_project(
                 no_to_remote_setup,
             )
         except Exception as ex:
+            clog.debug(
+                f"Encountered exception during init, will run teardown now",
+                exc_info=True,
+            )
             teardown(skip_local=False, skip_remotes=True)
 
 
