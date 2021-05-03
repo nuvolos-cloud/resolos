@@ -27,7 +27,7 @@ def test_init_from_archive():
                     "debug",
                     "init",
                     "-s",
-                    "https://resolos.s3.eu-central-1.amazonaws.com/examples/data_with_pandas.tar.gz",
+                    "https://resolos.s3.eu-central-1.amazonaws.com/examples/v0.3.0/data_with_pandas.tar.gz",
                 ],
             )
         )
