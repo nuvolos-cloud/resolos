@@ -13,9 +13,7 @@ from .remote import list_remote_ids, read_remote_db, get_remote
 from .shell import remove_remote_folder
 from .conda import (
     check_conda_env_exists_local,
-    check_conda_env_exists_remote,
     create_conda_env_local,
-    create_conda_env_remote,
     sync_env_and_files,
     execute_local_conda_command,
     execute_remote_conda_command,
@@ -32,7 +30,7 @@ def _init_project(
     local_env_name=None,
     remote_env_name=None,
     remote_files_path=None,
-    yes_to_all=False,
+    no_confirm=False,
     no_to_remote_setup=False,
 ):
     clog.info(f"Creating Resolos project at {pathlib.Path.cwd()}...")
@@ -63,7 +61,7 @@ def _init_project(
         }
         pdc.write(project_config)
         if not check_conda_env_exists_local(env_name):
-            if yes_to_all or click.confirm(
+            if no_confirm or click.confirm(
                 f"Local conda environment '{env_name}' does not exists yet. "
                 f"Do you want to create it now?",
                 default=True,
@@ -105,7 +103,7 @@ def _init_project(
             )
         else:
             remote_settings = get_remote(remote_db, remote_id)
-            if yes_to_all or click.confirm(
+            if no_confirm or click.confirm(
                 f"Do you want to sync the project files and the conda environment to remote '{remote_id}' now?",
                 default=True,
             ):
@@ -125,7 +123,7 @@ def init_project(
     local_env_name=None,
     remote_env_name=None,
     remote_files_path=None,
-    yes_to_all=False,
+    no_confirm=False,
     no_to_remote_setup=False,
 ):
     if in_resolos_dir():
@@ -144,10 +142,14 @@ def init_project(
                 local_env_name,
                 remote_env_name,
                 remote_files_path,
-                yes_to_all,
+                no_confirm,
                 no_to_remote_setup,
             )
         except Exception as ex:
+            clog.debug(
+                f"Encountered exception during init, will run teardown now",
+                exc_info=True,
+            )
             teardown(skip_local=False, skip_remotes=True)
 
 

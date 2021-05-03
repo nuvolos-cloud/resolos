@@ -84,6 +84,7 @@ def update_remote_settings(db, remote_id, **kwargs):
         "scheduler",
         "conda_load_command",
         "unison_path",
+        "conda_install_path"
     ]
     for key in global_config_keys:
         new_val = kwargs.get(key)

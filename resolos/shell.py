@@ -1,4 +1,6 @@
 import subprocess
+import os
+from shutil import which
 from time import sleep
 from shlex import quote
 from .logging import clog
@@ -92,6 +94,7 @@ def run_shell_cmd(
         bash_cmd,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
+        stdin=subprocess.PIPE,
         shell=True,
         bufsize=1,
         universal_newlines=True,
@@ -146,6 +149,7 @@ def run_ssh_cmd(
     stdout_as_info=False,
     shell_type="bash_login",
     login_shell_remote=True,
+    force_password=False,
 ):
     username = remote_settings["username"]
     hostname = remote_settings["hostname"]
@@ -155,8 +159,11 @@ def run_ssh_cmd(
     else:
         remote_cmd = cmd
     ssh_key = get_ssh_key()
-    if ssh_key is None:
-        ssh_cmd = f"ssh {username}@{hostname} -p {port} -o ServerAliveInterval={SSH_SERVERALIVEINTERVAL} {quote(remote_cmd)}"
+    if ssh_key is None or force_password:
+        if which("sshpass") and "SSHPASS" in os.environ:
+            ssh_cmd = f"sshpass -e ssh {username}@{hostname} -p {port} -o ServerAliveInterval={SSH_SERVERALIVEINTERVAL} {quote(remote_cmd)}"
+        else:
+            ssh_cmd = f"ssh {username}@{hostname} -p {port} -o ServerAliveInterval={SSH_SERVERALIVEINTERVAL} {quote(remote_cmd)}"
     else:
         ssh_cmd = f"ssh {username}@{hostname} -p {port} -o ServerAliveInterval={SSH_SERVERALIVEINTERVAL} -i {ssh_key} {quote(remote_cmd)}"
     ret_val, output = run_shell_cmd(

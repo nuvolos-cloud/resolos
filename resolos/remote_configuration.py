@@ -22,18 +22,20 @@ import click
 def add_remote_configuration(**kwargs):
     remote_name = kwargs.get("name")
     no_remote_setup = kwargs.get("no_remote_setup", False)
+    no_confirm = kwargs.get("y", False)
     create_dict = {
         "username": kwargs.get("username"),
         "hostname": kwargs.get("hostname"),
         "port": kwargs.get("port"),
         "scheduler": kwargs.get("scheduler"),
         "conda_load_command": kwargs.get("conda_load_command"),
+        "conda_install_path": kwargs.get("conda_install_path"),
         "unison_path": kwargs.get("unison_path"),
     }
     add_remote(read_remote_db(), remote_name, create_dict)
     remote_settings = get_remote(read_remote_db(), remote_name)
     if not no_remote_setup:
-        if click.confirm(
+        if no_confirm or click.confirm(
             f"Do you want resolos to use its own SSH key for accessing the remote?",
             default=True,
         ):
@@ -44,7 +46,7 @@ def add_remote_configuration(**kwargs):
             clog.info(f"Remote {remote_name} added!")
         except ResolosException as ex:
             clog.error(ex)
-            if not click.confirm(
+            if no_confirm or not click.confirm(
                 f"Some of the remote checks have failed. "
                 f"Do you still want to keep the new remote configuration '{remote_name}'?",
                 default=False,
@@ -69,7 +71,7 @@ def add_remote_configuration(**kwargs):
         get_project_remote_dict_config().write(project_remote_config)
         if not no_remote_setup:
             if not check_conda_env_exists_remote(create_dict, remote_env_name):
-                if click.confirm(
+                if no_confirm or click.confirm(
                     f"Remote conda environment '{remote_env_name}' does not exists yet. "
                     f"Do you want to create it now?",
                     default=True,
@@ -96,7 +98,8 @@ def update_remote_configuration(**kwargs):
     update_dict["name"] = remote_id
     clog.debug(f"The new remote config is:\n\n{update_dict}")
     clog.info(f"Running checks on updated remote '{remote_id}'...")
-    check_target(update_dict)
+    no_confirm = kwargs.get("y", False)
+    check_target(update_dict, no_confirm=no_confirm)
     try:
         project_dir = find_project_dir()
         project_remote_config = get_project_remote_dict_config().read()
@@ -123,7 +126,7 @@ def update_remote_configuration(**kwargs):
                 project_remote_settings["files_path"] = kwargs.get("remote_path")
         get_project_remote_dict_config().write(project_remote_config)
         if not check_conda_env_exists_remote(update_dict, remote_env_name):
-            if click.confirm(
+            if no_confirm or click.confirm(
                 f"Remote conda environment '{remote_env_name}' does not exists yet. "
                 f"Do you want to create it now?",
                 default=True,

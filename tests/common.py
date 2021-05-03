@@ -31,6 +31,7 @@ def fake_ssh_cmd(
     stdout_as_info=False,
     shell_type="bash_login",
     login_shell_remote=True,
+    force_password=False,
 ):
     if "conda --version" in cmd:
         return 0, echo("conda 4.9.2")

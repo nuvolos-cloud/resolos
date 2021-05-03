@@ -23,10 +23,8 @@ import os
 RESOLOS_PRIVATE_SSH_KEY_LOCATION = "~/.ssh/id_rsa_resolos"
 
 
-def check_target(target=None, raise_on_error=False):
+def check_target(target=None, raise_on_error=False, no_confirm=False):
     if target is None:
-        check_bash_version_local()
-        clog.info(f"PASS - Bash version is sufficiently new")
         check_conda_installed_local()
         clog.info(f"PASS - Conda is installed locally")
         check_unison_installed_local()
@@ -38,7 +36,7 @@ def check_target(target=None, raise_on_error=False):
         except MissingDependency as ex:
             if raise_on_error:
                 raise ex
-            elif click.confirm(
+            elif no_confirm or click.confirm(
                 "It seems conda is not available on the remote. "
                 "Do you want to install it now?",
                 default=True,
@@ -50,7 +48,7 @@ def check_target(target=None, raise_on_error=False):
         except MissingDependency as ex:
             if raise_on_error:
                 raise ex
-            elif click.confirm(
+            elif no_confirm or click.confirm(
                 "It seems unison is not available on the remote. "
                 "Do you want to install it now?",
                 default=True,
@@ -98,7 +96,7 @@ def setup_ssh(remote_settings):
             f"Could not find SSH public key {RESOLOS_PRIVATE_SSH_KEY_LOCATION}.pub"
         )
     ret_val, output = run_ssh_cmd(
-        remote_settings, f"mkdir -p .ssh && echo '{pub_key}' >> .ssh/authorized_keys"
+        remote_settings, f"mkdir -p ~/.ssh && chmod 700 ~/.ssh && echo '{pub_key}' >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys", force_password=True
     )
     if ret_val != 0:
         raise ShellError(

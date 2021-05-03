@@ -72,7 +72,7 @@ def res(ctx):
 @click.option(
     "-y",
     is_flag=True,
-    help="If specified, the local/remote conda environment will be created without a confirmation prompt.",
+    help="If specified, no prompts will be displayed to install conda/unison.",
     required=False,
 )
 @click.option(
@@ -92,13 +92,13 @@ def res_init(ctx, **kwargs):
 
     """
 
-    check_target()
+    check_target(no_confirm=kwargs.get("y", False))
     init_project(
         kwargs.get("source"),
         local_env_name=kwargs.get("env_name"),
         remote_env_name=kwargs.get("remote_env_name"),
         remote_files_path=kwargs.get("remote_path"),
-        yes_to_all=kwargs.get("y"),
+        no_confirm=kwargs.get("y", False),
         no_to_remote_setup=kwargs.get("no_remote_setup"),
     )
 
@@ -217,6 +217,12 @@ def res_remote(ctx):
     help="The command that makes the 'conda' command available for the shell",
 )
 @click.option(
+    "--conda-install-path",
+    type=str,
+    default="~",
+    help="The path to install miniconda on the remote, if required",
+)
+@click.option(
     "--unison-path",
     type=str,
     default="./bin/unison",
@@ -237,6 +243,12 @@ def res_remote(ctx):
     "--no-remote-setup",
     is_flag=True,
     help="If specified, remote configuration will be skipped (ssh key setup, syncing of project files and environment)",
+    required=False,
+)
+@click.option(
+    "-y",
+    is_flag=True,
+    help="If specified, SSH key setup, conda and unison install will happen without confirmation.",
     required=False,
 )
 @click.pass_context
@@ -273,6 +285,12 @@ def res_remote_add(ctx, **kwargs):
     help="The command that makes the 'conda' command available for the shell",
 )
 @click.option(
+    "--conda-install-path",
+    type=str,
+    default="~",
+    help="The path to install miniconda on the remote, if required",
+)
+@click.option(
     "--unison-path",
     type=str,
     help="The path of the unison executable on the remote",
@@ -287,6 +305,12 @@ def res_remote_add(ctx, **kwargs):
     "--remote-path",
     type=str,
     help="The path of the project folder on the remote. Will be created if not exists",
+)
+@click.option(
+    "-y",
+    is_flag=True,
+    help="If specified, SSH key setup, conda and unison install will happen without confirmation.",
+    required=False,
 )
 @click.pass_context
 def res_remote_update(ctx, **kwargs):
