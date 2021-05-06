@@ -5,3 +5,5 @@ click-logging
 pyyaml
 semver
 pytest
+requests
+pyjwt

@@ -495,17 +495,83 @@ def res_archive(ctx):
 
 
 @res_archive.command("create")
-@click.argument("output", type=click.Path())
+@click.option(
+    "-a",
+    "--access-token",
+    type=str,
+    envvar="YARETA_ACCESS_TOKEN",
+    help="The personal DLCM access token",
+)
+@click.option(
+    "-o",
+    "--organizational-unit-id",
+    type=str,
+    envvar="YARETA_ORG_UNIT_ID",
+    help="The resource id of the organizational unit",
+)
+@click.option(
+    "-d",
+    "--destination",
+    type=click.Choice(["file", "yareta"], case_sensitive=False),
+    default="file",
+    help="The destination to archive the project code",
+)
+@click.option(
+    "-f",
+    "--filename",
+    type=click.Path(),
+    default=None,
+    help="The filename of the archive",
+)
+@click.option(
+    "-t",
+    "--title",
+    type=str,
+    help="The title of the Yareta deposit to create for the archive",
+)
+@click.option(
+    "-y",
+    "--year",
+    type=str,
+    help="The year of the Yareta deposit",
+)
+@click.option(
+    "-desc",
+    "--description",
+    type=str,
+    help="The description of the Yareta deposit",
+)
+@click.option(
+    "--deposit-access",
+    type=str,
+    default="PUBLIC",
+    help="The access level of the Yareta deposit",
+)
+@click.option(
+    "--license-id",
+    type=str,
+    default="CC-BY-4-0",
+    help="The license id of the Yareta deposit",
+)
+@click.option(
+    "--keywords",
+    type=str,
+    help="Comma-separated list of the Yareta deposit keywords",
+)
 @click.pass_context
-def res_archive_create(ctx, output, **kwargs):
+def res_archive_create(ctx, **kwargs):
     """
-    Archives the project to the specified destination.
+    Archives the project to the specified destination. The currently supported destinations are local file ('file')
+    and Yareta archive ('yareta').
 
-    Output must be a filesystem path (e.g. ../res_v1.tar.gz) writeable for the the resolos process.
-    The path should not be inside the project folder.
+    Options for the 'file' destination:
+
+        --filename:
+        Filename must be a filesystem path (e.g. ../res_v1.tar.gz) writeable for the the resolos process.
+        The path should not be inside the project folder.
     """
     local_env = get_project_env()
-    make_archive(local_env, output)
+    make_archive(local_env, **kwargs)
 
 
 @res_archive.command("load")
