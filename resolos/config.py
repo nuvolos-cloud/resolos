@@ -238,3 +238,14 @@ def info():
         clog.info(
             f"The project remote config ({get_project_remotes_config_path()}):\n{yaml.dump(prc)}"
         )
+
+
+def get_option(d: dict, key: str, err_msg: str = None, split_list=False):
+    res = d.get(key)
+    if res is not None or err_msg is None:
+        if split_list:
+            return [c.strip() for c in res.split(",")]
+        else:
+            return res
+    else:
+        raise ResolosException(err_msg)

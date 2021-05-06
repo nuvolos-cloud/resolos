@@ -575,7 +575,38 @@ def res_archive_create(ctx, **kwargs):
 
 
 @res_archive.command("load")
-@click.argument("source")
+@click.option(
+    "-a",
+    "--access-token",
+    type=str,
+    envvar="YARETA_ACCESS_TOKEN",
+    help="The personal DLCM access token",
+)
+@click.option(
+    "-s",
+    "--source",
+    type=click.Choice(["file", "yareta", "url"], case_sensitive=False),
+    default="file",
+    help="The source to load the archive from",
+)
+@click.option(
+    "-d",
+    "--deposit-id",
+    type=str,
+    help="The deposit id of the Yareta deposit",
+)
+@click.option(
+    "-f",
+    "--filename",
+    type=click.Path(),
+    help="The filename of the archive to load",
+)
+@click.option(
+    "-u",
+    "--url",
+    type=str,
+    help="The url to load the archive from",
+)
 @click.option(
     "-y",
     is_flag=True,
@@ -583,14 +614,14 @@ def res_archive_create(ctx, **kwargs):
     required=False,
 )
 @click.pass_context
-def res_archive_load(ctx, source, **kwargs):
+def res_archive_load(ctx, **kwargs):
     """
     Loads the specified archive into the project.
 
     Source can be a filesystem path or a publicly accessible https download url.
     """
 
-    load_archive(source, confirm_needed=not kwargs.get("y"))
+    load_archive(**kwargs)
 
 
 @res.command("install")

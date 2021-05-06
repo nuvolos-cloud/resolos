@@ -16,9 +16,9 @@ from .exception import (
     NotAResolosArchiveError,
 )
 from .platform import find_project_dir, get_arch, get_user_platform, find_resolos_dir
-from .config import get_project_dict_config, randomString, DictConfig
+from .config import get_project_dict_config, randomString, DictConfig, get_option
 from .shell import run_shell_cmd
-from .storage.yareta import deposit_archive
+from .storage.yareta import deposit_archive, download_archive
 import click
 import shutil
 import tempfile
@@ -40,6 +40,7 @@ FILES_NAME = "files"
 RESOLOS_FOLDER_NAME = ".resolos"
 TAR_HEADER_RESOLOS_VERSION = "resolos_version"
 TAR_HEADER_CREATED_ON = "created_on"
+ARCHIVE_FILENAME = "resolos_archive.tar.gz"
 
 EXCLUDE_FILES = [".DS_Store", ".tmp"]
 SUPPORTED_REMOTE_PROTOCOLS = ["http", "https", "ftp", "sftp"]
@@ -77,7 +78,7 @@ def make_archive(env_name: str, **kwargs):
         clog.info(f"Successfully archived resolos project to {output_filename}!")
     elif dest == "yareta":
         with tempfile.TemporaryDirectory() as tmpdirname:
-            output_filename = f"{tmpdirname}/resolos_archive.tar.gz"
+            output_filename = f"{tmpdirname}/{ARCHIVE_FILENAME}"
             make_archive_file(env_name, output_filename=output_filename)
             clog.debug(f"Successfully created archive file {output_filename}!")
             clog.info(f"Depositing resolos project archive to Yareta...")
@@ -296,27 +297,52 @@ def load_archive_file(input_filename: str, files_path):
                             pdc.write(project_settings)
 
 
-def load_archive(input_filename: str, confirm_needed: bool = True):
-    download_archive = False
-    for proto in SUPPORTED_REMOTE_PROTOCOLS:
-        if input_filename.startswith(proto):
-            download_archive = True
+def load_archive(**kwargs):
+    confirm_needed = not kwargs.get("y")
+    source = kwargs["source"]
     project_dir = find_project_dir()
     if not confirm_needed or click.confirm(
         "This operation will overwrite the contents of your project. Continue?",
         default=True,
     ):
-        if download_archive:
-            clog.info(f"Downloading archive '{input_filename}'...")
-            with urllib.request.urlopen(input_filename) as response:
+        if source == "url":
+            url = get_option(kwargs, "url", "Missing required option: --url")
+            for proto in SUPPORTED_REMOTE_PROTOCOLS:
+                if not url.startswith(proto):
+                    raise ResolosException(
+                        f"Unsupported protocol, "
+                        f"the only supported ones are: {SUPPORTED_REMOTE_PROTOCOLS}"
+                    )
+            clog.info(f"Downloading archive '{url}'...")
+            with urllib.request.urlopen(url) as response:
                 with tempfile.NamedTemporaryFile(delete=True) as arch_file:
                     shutil.copyfileobj(response, arch_file)
                     load_archive_file(arch_file.name, project_dir)
                     clog.info(
-                        f"Successfully loaded archive '{input_filename}' into project '{project_dir.absolute()}'"
+                        f"Successfully loaded archive '{url}' into project '{project_dir.absolute()}'"
                     )
-        else:
+        elif source == "file":
+            input_filename = get_option(
+                kwargs, "filename", "Missing required option: --filename"
+            )
             load_archive_file(input_filename, project_dir)
             clog.info(
                 f"Successfully loaded archive '{input_filename}' into project '{project_dir.absolute()}'"
             )
+        elif source == "yareta":
+            access_token = get_option(
+                kwargs, "access_token", f"No access token was found"
+            )
+            deposit_id = get_option(
+                kwargs, "deposit_id", "Missing required option: --deposit-id"
+            )
+            with tempfile.NamedTemporaryFile(delete=True) as arch_file:
+                download_archive(
+                    arch_file.name, ARCHIVE_FILENAME, deposit_id, access_token
+                )
+                load_archive_file(arch_file.name, project_dir)
+                clog.info(
+                    f"Successfully loaded archive from Yareta deposit '{deposit_id}' into project '{project_dir.absolute()}'"
+                )
+        else:
+            raise ResolosException(f"Unknown source type: {source}")
