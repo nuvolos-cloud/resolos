@@ -25,6 +25,7 @@ from .version import __version__
 import re
 from semver import VersionInfo
 from datetime import datetime
+from click import BadOptionUsage
 
 
 ver_re = re.compile(r"\d+.\d+.\d+")
@@ -240,12 +241,27 @@ def info():
         )
 
 
-def get_option(d: dict, key: str, err_msg: str = None, split_list=False):
-    res = d.get(key)
-    if res is not None or err_msg is None:
-        if split_list:
+def get_option(d: dict, key: str, err_msg: str = None, split_list=False, pop=False):
+    res = d.pop(key, None) if pop else d.get(key)
+    if res is None and err_msg:
+        raise BadOptionUsage(key, err_msg)
+    else:
+        if res and split_list:
             return [c.strip() for c in res.split(",")]
         else:
             return res
-    else:
-        raise ResolosException(err_msg)
+
+
+def verify_mutually_exclusive_options(keys, options, must_select_one=True, **kwargs):
+    count = 0
+    for key in keys:
+        if kwargs.get(key):
+            count += 1
+    if must_select_one and count == 0:
+        raise BadOptionUsage(
+            None, f"One of the following options is mandatory: {options}"
+        )
+    elif count > 1:
+        raise BadOptionUsage(
+            None, f"Only one of the following options may be specified: {options}"
+        )

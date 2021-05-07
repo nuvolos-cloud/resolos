@@ -4,6 +4,7 @@ from .config import (
     get_project_env,
     get_project_settings_for_remote,
     info,
+    verify_mutually_exclusive_options,
 )
 import click_logging
 from .logging import clog
@@ -64,10 +65,37 @@ def res(ctx):
     help="The path of the project folder on the remote. Will be created if not exists",
 )
 @click.option(
-    "-s",
-    "--source",
-    help="The source archive to initialize the project from. "
-    "Can be a path on the filesystem, or a download URL of the archive file",
+    "--base-url",
+    type=str,
+    envvar="YARETA_BASE_URL",
+    # default="https://access.yareta.unige.ch",
+    default="https://sandbox.dlcm.ch",
+    help="The base url of the Yareta API",
+)
+@click.option(
+    "-a",
+    "--access-token",
+    type=str,
+    envvar="YARETA_ACCESS_TOKEN",
+    help="The personal DLCM access token",
+)
+@click.option(
+    "-d",
+    "--deposit-id",
+    type=str,
+    help="The deposit id of the Yareta deposit",
+)
+@click.option(
+    "-f",
+    "--filename",
+    type=click.Path(),
+    help="The filename of the archive to load",
+)
+@click.option(
+    "-u",
+    "--url",
+    type=str,
+    help="The publicly accessible url to load the archive from",
 )
 @click.option(
     "-y",
@@ -92,9 +120,19 @@ def res_init(ctx, **kwargs):
 
     """
 
+    verify_mutually_exclusive_options(
+        ["url", "filename", "deposit_id"],
+        ["--url", "--filename", "--deposit-id"],
+        must_select_one=False,
+        **kwargs,
+    )
     check_target(no_confirm=kwargs.get("y", False))
     init_project(
-        kwargs.get("source"),
+        base_url=kwargs.get("base_url"),
+        access_token=kwargs.get("access_token"),
+        url=kwargs.get("url"),
+        filename=kwargs.get("filename"),
+        deposit_id=kwargs.get("deposit_id"),
         local_env_name=kwargs.get("env_name"),
         remote_env_name=kwargs.get("remote_env_name"),
         remote_files_path=kwargs.get("remote_path"),
@@ -496,6 +534,14 @@ def res_archive(ctx):
 
 @res_archive.command("create")
 @click.option(
+    "--base-url",
+    type=str,
+    envvar="YARETA_BASE_URL",
+    # default="https://access.yareta.unige.ch",
+    default="https://sandbox.dlcm.ch",
+    help="The base url of the Yareta API",
+)
+@click.option(
     "-a",
     "--access-token",
     type=str,
@@ -508,13 +554,6 @@ def res_archive(ctx):
     type=str,
     envvar="YARETA_ORG_UNIT_ID",
     help="The resource id of the organizational unit",
-)
-@click.option(
-    "-d",
-    "--destination",
-    type=click.Choice(["file", "yareta"], case_sensitive=False),
-    default="file",
-    help="The destination to archive the project code",
 )
 @click.option(
     "-f",
@@ -576,18 +615,19 @@ def res_archive_create(ctx, **kwargs):
 
 @res_archive.command("load")
 @click.option(
+    "--base-url",
+    type=str,
+    envvar="YARETA_BASE_URL",
+    # default="https://access.yareta.unige.ch",
+    default="https://sandbox.dlcm.ch",
+    help="The base url of the Yareta API",
+)
+@click.option(
     "-a",
     "--access-token",
     type=str,
     envvar="YARETA_ACCESS_TOKEN",
     help="The personal DLCM access token",
-)
-@click.option(
-    "-s",
-    "--source",
-    type=click.Choice(["file", "yareta", "url"], case_sensitive=False),
-    default="file",
-    help="The source to load the archive from",
 )
 @click.option(
     "-d",
@@ -621,7 +661,7 @@ def res_archive_load(ctx, **kwargs):
     Source can be a filesystem path or a publicly accessible https download url.
     """
 
-    load_archive(**kwargs)
+    load_archive(confirm_needed=not kwargs.get("y"), **kwargs)
 
 
 @res.command("install")

@@ -16,7 +16,13 @@ from .exception import (
     NotAResolosArchiveError,
 )
 from .platform import find_project_dir, get_arch, get_user_platform, find_resolos_dir
-from .config import get_project_dict_config, randomString, DictConfig, get_option
+from .config import (
+    get_project_dict_config,
+    randomString,
+    DictConfig,
+    get_option,
+    verify_mutually_exclusive_options,
+)
 from .shell import run_shell_cmd
 from .storage.yareta import deposit_archive, download_archive
 import click
@@ -71,23 +77,60 @@ def filter_resolos(ti: tarfile.TarInfo):
 
 
 def make_archive(env_name: str, **kwargs):
-    dest = kwargs.get("destination").lower()
-    if dest == "file":
+    verify_mutually_exclusive_options(
+        ["filename", "organizational_unit_id"],
+        ["--filename", "--organizational-unit-id"],
+        **kwargs,
+    )
+    if kwargs.get("filename"):
         output_filename = kwargs.get("filename")
         make_archive_file(env_name, output_filename=output_filename)
         clog.info(f"Successfully archived resolos project to {output_filename}!")
-    elif dest == "yareta":
+    elif kwargs.get("organizational_unit_id"):
         with tempfile.TemporaryDirectory() as tmpdirname:
             output_filename = f"{tmpdirname}/{ARCHIVE_FILENAME}"
+            base_url = get_option(
+                kwargs, "base_url", f"No Yareta base url was found", pop=True
+            )
+            access_token = get_option(
+                kwargs, "access_token", f"No access token was found", pop=True
+            )
+            org_unit_id = get_option(
+                kwargs,
+                "organizational_unit_id",
+                f"No organizational unit id was found",
+                pop=True,
+            )
+            title = get_option(
+                kwargs, "title", f"Missing required option: --title", pop=True
+            )
+            year = get_option(
+                kwargs, "year", f"Missing required option: --year", pop=True
+            )
+            description = get_option(
+                kwargs,
+                "description",
+                f"Missing required option: --description",
+                pop=True,
+            )
             make_archive_file(env_name, output_filename=output_filename)
             clog.debug(f"Successfully created archive file {output_filename}!")
             clog.info(f"Depositing resolos project archive to Yareta...")
-            deposit_id = deposit_archive(output_filename, **kwargs)
+            deposit_id = deposit_archive(
+                output_filename,
+                base_url,
+                access_token,
+                org_unit_id,
+                title,
+                year,
+                description,
+                **kwargs,
+            )
             clog.info(
                 f"Successfully deposited resolos project archive to Yareta, deposit id is '{deposit_id}'!"
             )
     else:
-        raise ResolosException(f"Unknown resolos archival destination '{dest}'")
+        raise ResolosException(f"Unknown resolos archival destination")
 
 
 def make_archive_file(env_name: str, output_filename: str):
@@ -298,19 +341,22 @@ def load_archive_file(input_filename: str, files_path):
 
 
 def load_archive(**kwargs):
-    confirm_needed = not kwargs.get("y")
-    source = kwargs["source"]
+    verify_mutually_exclusive_options(
+        ["url", "filename", "deposit_id"],
+        ["--url", "--filename", "--deposit-id"],
+        **kwargs,
+    )
     project_dir = find_project_dir()
-    if not confirm_needed or click.confirm(
+    if not kwargs.get("confirm_needed") or click.confirm(
         "This operation will overwrite the contents of your project. Continue?",
         default=True,
     ):
-        if source == "url":
+        if kwargs.get("url"):
             url = get_option(kwargs, "url", "Missing required option: --url")
             for proto in SUPPORTED_REMOTE_PROTOCOLS:
                 if not url.startswith(proto):
                     raise ResolosException(
-                        f"Unsupported protocol, "
+                        f"Unsupported protocol in url '{url}', "
                         f"the only supported ones are: {SUPPORTED_REMOTE_PROTOCOLS}"
                     )
             clog.info(f"Downloading archive '{url}'...")
@@ -321,7 +367,7 @@ def load_archive(**kwargs):
                     clog.info(
                         f"Successfully loaded archive '{url}' into project '{project_dir.absolute()}'"
                     )
-        elif source == "file":
+        elif kwargs.get("filename"):
             input_filename = get_option(
                 kwargs, "filename", "Missing required option: --filename"
             )
@@ -329,7 +375,8 @@ def load_archive(**kwargs):
             clog.info(
                 f"Successfully loaded archive '{input_filename}' into project '{project_dir.absolute()}'"
             )
-        elif source == "yareta":
+        elif kwargs.get("deposit_id"):
+            base_url = get_option(kwargs, "base_url", f"No Yareta base url was found")
             access_token = get_option(
                 kwargs, "access_token", f"No access token was found"
             )
@@ -338,11 +385,11 @@ def load_archive(**kwargs):
             )
             with tempfile.NamedTemporaryFile(delete=True) as arch_file:
                 download_archive(
-                    arch_file.name, ARCHIVE_FILENAME, deposit_id, access_token
+                    arch_file.name, ARCHIVE_FILENAME, deposit_id, access_token, base_url
                 )
                 load_archive_file(arch_file.name, project_dir)
                 clog.info(
                     f"Successfully loaded archive from Yareta deposit '{deposit_id}' into project '{project_dir.absolute()}'"
                 )
         else:
-            raise ResolosException(f"Unknown source type: {source}")
+            raise ResolosException(f"Missing source specification")

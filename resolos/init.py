@@ -26,7 +26,11 @@ from datetime import datetime
 
 
 def _init_project(
-    source=None,
+    base_url=None,
+    access_token=None,
+    url=None,
+    filename=None,
+    deposit_id=None,
     local_env_name=None,
     remote_env_name=None,
     remote_files_path=None,
@@ -36,8 +40,15 @@ def _init_project(
     clog.info(f"Creating Resolos project at {pathlib.Path.cwd()}...")
     localdir = create_project_folder()
     pdc = get_project_dict_config()
-    if source:
-        load_archive(source, confirm_needed=False)
+    if url or filename or deposit_id:
+        load_archive(
+            base_url=base_url,
+            access_token=access_token,
+            url=url,
+            filename=filename,
+            deposit_id=deposit_id,
+            confirm_needed=False,
+        )
         project_settings = pdc.read()
         env_name = project_settings["env_name"]
         project_settings["resolos_version"] = __version__
@@ -119,7 +130,11 @@ def _init_project(
 
 
 def init_project(
-    source=None,
+    base_url=None,
+    access_token=None,
+    url=None,
+    filename=None,
+    deposit_id=None,
     local_env_name=None,
     remote_env_name=None,
     remote_files_path=None,
@@ -138,7 +153,11 @@ def init_project(
     else:
         try:
             _init_project(
-                source,
+                base_url,
+                access_token,
+                url,
+                filename,
+                deposit_id,
                 local_env_name,
                 remote_env_name,
                 remote_files_path,
@@ -146,10 +165,8 @@ def init_project(
                 no_to_remote_setup,
             )
         except Exception as ex:
-            clog.debug(
-                f"Encountered exception during init, will run teardown now",
-                exc_info=True,
-            )
+            clog.error(ex, exc_info=True)
+            clog.info(f"Running teardown now")
             teardown(skip_local=False, skip_remotes=True)
 
 

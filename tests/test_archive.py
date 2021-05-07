@@ -59,12 +59,14 @@ class TestArchive:
         create_project_files(self.test_folders, self.test_files)
         runner = CliRunner()
         verify_result(
-            runner.invoke(res, ["-v", "DEBUG", "archive", "create", self.test_archive])
+            runner.invoke(
+                res, ["-v", "DEBUG", "archive", "create", "-f", self.test_archive]
+            )
         )
         delete_project_files(self.test_folders, self.test_files)
         verify_result(
             runner.invoke(
-                res, ["-v", "DEBUG", "archive", "load", self.test_archive, "-y"]
+                res, ["-v", "DEBUG", "archive", "load", "-f", self.test_archive, "-y"]
             )
         )
         check_project_files_exist(self.test_folders, self.test_files)

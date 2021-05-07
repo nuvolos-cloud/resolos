@@ -1,12 +1,11 @@
 import jwt
 import requests
-from ..exception import ResolosException
+from ..exception import ResolosException, YaretaError
 from ..logging import clog
 from ..config import get_option
 from time import sleep
 
 DOWNLOAD_CHUNK_SIZE = 8192
-YARETA_BASE_URL = "https://sandbox.dlcm.ch"
 
 
 class YaretaClient(object):
@@ -18,9 +17,9 @@ class YaretaClient(object):
 
     def request(self, method, path, expected_status_code=None, **kwargs):
         url = f"{self.base_url}{path}"
-        resp = self.session.request(method, url, **kwargs)
+        resp = self.session.request(method, url, timeout=15, **kwargs)
         if resp.status_code == 401:
-            raise ResolosException(
+            raise YaretaError(
                 f"Received 'Unauthorized' response from the server for request [{method}] {url}\n"
                 f"Has your access token expired? Try generating a new one"
             )
@@ -28,7 +27,7 @@ class YaretaClient(object):
             expected_status_code is not None
             and resp.status_code != expected_status_code
         ):
-            raise ResolosException(
+            raise YaretaError(
                 f"Expected response code {expected_status_code} for request [{method}] {url}, "
                 f"received {resp}"
             )
@@ -136,20 +135,20 @@ def approve_deposit(yc: YaretaClient, deposit_id):
     return res
 
 
-def deposit_archive(archive_filename: str, **kwargs):
-    access_token = get_option(kwargs, "access_token", f"No access token was found")
-    org_unit_id = get_option(
-        kwargs, "organizational_unit_id", f"No organizational unit id was found"
-    )
-    title = get_option(kwargs, "title", f"No Yareta deposit title was specified")
-    year = get_option(kwargs, "year", f"No Yareta deposit year was specified")
-    description = get_option(
-        kwargs, "description", f"No Yareta deposit description was specified"
-    )
+def deposit_archive(
+    archive_filename: str,
+    base_url: str,
+    access_token: str,
+    org_unit_id: str,
+    title: str,
+    year: str,
+    description: str,
+    **kwargs,
+):
     access = get_option(kwargs, "access")
     license_id = get_option(kwargs, "license_id")
     keywords = get_option(kwargs, "keywords", split_list=True)
-    yc = YaretaClient(YARETA_BASE_URL, access_token)
+    yc = YaretaClient(base_url, access_token)
     username = get_uid_from_token(access_token)
     person_res_id = get_person_res_id(yc, username)
     clog.debug(
@@ -168,7 +167,7 @@ def deposit_archive(archive_filename: str, **kwargs):
     )
     deposit_id = res["resId"]
     upload_file_to_deposit(yc, deposit_id, archive_filename)
-    sleep(5)
+    sleep(10)
     approve_deposit(yc, deposit_id)
     return deposit_id
 
@@ -219,9 +218,13 @@ def download_file(yc, deposit_id, file_id, target_filename):
 
 
 def download_archive(
-    target_filename: str, archive_filename: str, deposit_id: str, access_token: str
+    target_filename: str,
+    archive_filename: str,
+    deposit_id: str,
+    access_token: str,
+    base_url: str,
 ):
 
-    yc = YaretaClient(YARETA_BASE_URL, access_token)
+    yc = YaretaClient(base_url, access_token)
     file_id = search_deposit(yc, deposit_id, archive_filename)
     download_file(yc, deposit_id, file_id, target_filename)
