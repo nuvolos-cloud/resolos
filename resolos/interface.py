@@ -598,10 +598,10 @@ def res_archive(ctx):
 @click.pass_context
 def res_archive_create(ctx, **kwargs):
     """
-    Archives the project to the specified destination. The currently supported destinations are local file ('file')
-    and Yareta archive ('yareta').
+    Archives the project to the specified destination. The currently supported destinations are local file (-f, --filename)
+    and Yareta archive (-o, --organizational-unit-id).
 
-    Options for the 'file' destination:
+    Notes for the local file destination:
 
         --filename:
         Filename must be a filesystem path (e.g. ../res_v1.tar.gz) writeable for the the resolos process.
