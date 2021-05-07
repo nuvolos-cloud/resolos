@@ -353,12 +353,15 @@ def load_archive(**kwargs):
     ):
         if kwargs.get("url"):
             url = get_option(kwargs, "url", "Missing required option: --url")
+            supported_proto = False
             for proto in SUPPORTED_REMOTE_PROTOCOLS:
-                if not url.startswith(proto):
-                    raise ResolosException(
-                        f"Unsupported protocol in url '{url}', "
-                        f"the only supported ones are: {SUPPORTED_REMOTE_PROTOCOLS}"
-                    )
+                if url.startswith(proto):
+                    supported_proto = True
+            if not supported_proto:
+                raise ResolosException(
+                    f"Unsupported protocol in url '{url}', "
+                    f"the only supported ones are: {SUPPORTED_REMOTE_PROTOCOLS}"
+                )
             clog.info(f"Downloading archive '{url}'...")
             with urllib.request.urlopen(url) as response:
                 with tempfile.NamedTemporaryFile(delete=True) as arch_file:

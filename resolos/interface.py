@@ -68,8 +68,7 @@ def res(ctx):
     "--base-url",
     type=str,
     envvar="YARETA_BASE_URL",
-    # default="https://access.yareta.unige.ch",
-    default="https://sandbox.dlcm.ch",
+    default="https://access.yareta.unige.ch",
     help="The base url of the Yareta API",
 )
 @click.option(
@@ -537,8 +536,7 @@ def res_archive(ctx):
     "--base-url",
     type=str,
     envvar="YARETA_BASE_URL",
-    # default="https://access.yareta.unige.ch",
-    default="https://sandbox.dlcm.ch",
+    default="https://access.yareta.unige.ch",
     help="The base url of the Yareta API",
 )
 @click.option(
@@ -618,8 +616,7 @@ def res_archive_create(ctx, **kwargs):
     "--base-url",
     type=str,
     envvar="YARETA_BASE_URL",
-    # default="https://access.yareta.unige.ch",
-    default="https://sandbox.dlcm.ch",
+    default="https://access.yareta.unige.ch",
     help="The base url of the Yareta API",
 )
 @click.option(
