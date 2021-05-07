@@ -26,7 +26,15 @@ setup(
     author_email="support@nuvolos.cloud",
     license="MIT",
     packages=["resolos"],
-    install_requires=["click", "click-logging", "pyyaml", "semver", "conda-pack"],
+    install_requires=[
+        "click",
+        "click-logging",
+        "pyyaml",
+        "semver",
+        "conda-pack",
+        "requests",
+        "pyjwt",
+    ],
     zip_safe=False,
     entry_points="""
         [console_scripts]

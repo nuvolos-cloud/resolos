@@ -4,6 +4,7 @@ from .config import (
     get_project_env,
     get_project_settings_for_remote,
     info,
+    verify_mutually_exclusive_options,
 )
 import click_logging
 from .logging import clog
@@ -64,10 +65,36 @@ def res(ctx):
     help="The path of the project folder on the remote. Will be created if not exists",
 )
 @click.option(
-    "-s",
-    "--source",
-    help="The source archive to initialize the project from. "
-    "Can be a path on the filesystem, or a download URL of the archive file",
+    "--base-url",
+    type=str,
+    envvar="YARETA_BASE_URL",
+    default="https://access.yareta.unige.ch",
+    help="The base url of the Yareta API",
+)
+@click.option(
+    "-a",
+    "--access-token",
+    type=str,
+    envvar="YARETA_ACCESS_TOKEN",
+    help="The personal DLCM access token",
+)
+@click.option(
+    "-d",
+    "--deposit-id",
+    type=str,
+    help="The deposit id of the Yareta deposit",
+)
+@click.option(
+    "-f",
+    "--filename",
+    type=click.Path(),
+    help="The filename of the archive to load",
+)
+@click.option(
+    "-u",
+    "--url",
+    type=str,
+    help="The publicly accessible url to load the archive from",
 )
 @click.option(
     "-y",
@@ -92,9 +119,19 @@ def res_init(ctx, **kwargs):
 
     """
 
+    verify_mutually_exclusive_options(
+        ["url", "filename", "deposit_id"],
+        ["--url", "--filename", "--deposit-id"],
+        must_select_one=False,
+        **kwargs,
+    )
     check_target(no_confirm=kwargs.get("y", False))
     init_project(
-        kwargs.get("source"),
+        base_url=kwargs.get("base_url"),
+        access_token=kwargs.get("access_token"),
+        url=kwargs.get("url"),
+        filename=kwargs.get("filename"),
+        deposit_id=kwargs.get("deposit_id"),
         local_env_name=kwargs.get("env_name"),
         remote_env_name=kwargs.get("remote_env_name"),
         remote_files_path=kwargs.get("remote_path"),
@@ -495,21 +532,118 @@ def res_archive(ctx):
 
 
 @res_archive.command("create")
-@click.argument("output", type=click.Path())
+@click.option(
+    "--base-url",
+    type=str,
+    envvar="YARETA_BASE_URL",
+    default="https://access.yareta.unige.ch",
+    help="The base url of the Yareta API",
+)
+@click.option(
+    "-a",
+    "--access-token",
+    type=str,
+    envvar="YARETA_ACCESS_TOKEN",
+    help="The personal DLCM access token",
+)
+@click.option(
+    "-o",
+    "--organizational-unit-id",
+    type=str,
+    envvar="YARETA_ORG_UNIT_ID",
+    help="The resource id of the organizational unit",
+)
+@click.option(
+    "-f",
+    "--filename",
+    type=click.Path(),
+    default=None,
+    help="The filename of the archive",
+)
+@click.option(
+    "-t",
+    "--title",
+    type=str,
+    help="The title of the Yareta deposit to create for the archive",
+)
+@click.option(
+    "-y",
+    "--year",
+    type=str,
+    help="The year of the Yareta deposit",
+)
+@click.option(
+    "-desc",
+    "--description",
+    type=str,
+    help="The description of the Yareta deposit",
+)
+@click.option(
+    "--deposit-access",
+    type=str,
+    default="PUBLIC",
+    help="The access level of the Yareta deposit",
+)
+@click.option(
+    "--license-id",
+    type=str,
+    default="CC-BY-4-0",
+    help="The license id of the Yareta deposit",
+)
+@click.option(
+    "--keywords",
+    type=str,
+    help="Comma-separated list of the Yareta deposit keywords",
+)
 @click.pass_context
-def res_archive_create(ctx, output, **kwargs):
+def res_archive_create(ctx, **kwargs):
     """
-    Archives the project to the specified destination.
+    Archives the project to the specified destination. The currently supported destinations are local file (-f, --filename)
+    and Yareta archive (-o, --organizational-unit-id).
 
-    Output must be a filesystem path (e.g. ../res_v1.tar.gz) writeable for the the resolos process.
-    The path should not be inside the project folder.
+    Notes for the local file destination:
+
+        --filename:
+        Filename must be a filesystem path (e.g. ../res_v1.tar.gz) writeable for the the resolos process.
+        The path should not be inside the project folder.
     """
     local_env = get_project_env()
-    make_archive(local_env, output)
+    make_archive(local_env, **kwargs)
 
 
 @res_archive.command("load")
-@click.argument("source")
+@click.option(
+    "--base-url",
+    type=str,
+    envvar="YARETA_BASE_URL",
+    default="https://access.yareta.unige.ch",
+    help="The base url of the Yareta API",
+)
+@click.option(
+    "-a",
+    "--access-token",
+    type=str,
+    envvar="YARETA_ACCESS_TOKEN",
+    help="The personal DLCM access token",
+)
+@click.option(
+    "-d",
+    "--deposit-id",
+    type=str,
+    help="The deposit id of the Yareta deposit",
+)
+@click.option(
+    "-f",
+    "--filename",
+    type=click.Path(),
+    help="The filename of the archive to load",
+)
+@click.option(
+    "-u",
+    "--url",
+    type=str,
+    help="The url to load the archive from",
+)
 @click.option(
     "-y",
     is_flag=True,
@@ -517,14 +651,14 @@ def res_archive_create(ctx, output, **kwargs):
     required=False,
 )
 @click.pass_context
-def res_archive_load(ctx, source, **kwargs):
+def res_archive_load(ctx, **kwargs):
     """
     Loads the specified archive into the project.
 
     Source can be a filesystem path or a publicly accessible https download url.
     """
 
-    load_archive(source, confirm_needed=not kwargs.get("y"))
+    load_archive(confirm_needed=not kwargs.get("y"), **kwargs)
 
 
 @res.command("install")

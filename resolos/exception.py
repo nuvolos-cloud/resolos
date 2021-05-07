@@ -109,3 +109,8 @@ class MissingRemoteLocation(ResolosException):
 class NotAResolosArchiveError(ResolosException):
     def __init__(self, msg):
         super().__init__(msg)
+
+
+class YaretaError(ResolosException):
+    def __init__(self, msg):
+        super().__init__(msg)

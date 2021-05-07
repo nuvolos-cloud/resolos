@@ -25,6 +25,7 @@ from .version import __version__
 import re
 from semver import VersionInfo
 from datetime import datetime
+from click import BadOptionUsage
 
 
 ver_re = re.compile(r"\d+.\d+.\d+")
@@ -237,4 +238,30 @@ def info():
         clog.info(f"The project config ({get_project_config_path()}):\n{yaml.dump(pc)}")
         clog.info(
             f"The project remote config ({get_project_remotes_config_path()}):\n{yaml.dump(prc)}"
+        )
+
+
+def get_option(d: dict, key: str, err_msg: str = None, split_list=False, pop=False):
+    res = d.pop(key, None) if pop else d.get(key)
+    if res is None and err_msg:
+        raise BadOptionUsage(key, err_msg)
+    else:
+        if res and split_list:
+            return [c.strip() for c in res.split(",")]
+        else:
+            return res
+
+
+def verify_mutually_exclusive_options(keys, options, must_select_one=True, **kwargs):
+    count = 0
+    for key in keys:
+        if kwargs.get(key):
+            count += 1
+    if must_select_one and count == 0:
+        raise BadOptionUsage(
+            None, f"One of the following options is mandatory: {options}"
+        )
+    elif count > 1:
+        raise BadOptionUsage(
+            None, f"Only one of the following options may be specified: {options}"
         )

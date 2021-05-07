@@ -9,10 +9,22 @@ from .conda import (
     get_requirements,
     get_nondep_packages,
 )
-from .exception import LocalCommandError, NotAProjectFolderError, NotAResolosArchiveError
+from .exception import (
+    LocalCommandError,
+    ResolosException,
+    NotAProjectFolderError,
+    NotAResolosArchiveError,
+)
 from .platform import find_project_dir, get_arch, get_user_platform, find_resolos_dir
-from .config import get_project_dict_config, randomString, DictConfig
+from .config import (
+    get_project_dict_config,
+    randomString,
+    DictConfig,
+    get_option,
+    verify_mutually_exclusive_options,
+)
 from .shell import run_shell_cmd
+from .storage.yareta import deposit_archive, download_archive
 import click
 import shutil
 import tempfile
@@ -34,6 +46,7 @@ FILES_NAME = "files"
 RESOLOS_FOLDER_NAME = ".resolos"
 TAR_HEADER_RESOLOS_VERSION = "resolos_version"
 TAR_HEADER_CREATED_ON = "created_on"
+ARCHIVE_FILENAME = "resolos_archive.tar.gz"
 
 EXCLUDE_FILES = [".DS_Store", ".tmp"]
 SUPPORTED_REMOTE_PROTOCOLS = ["http", "https", "ftp", "sftp"]
@@ -63,7 +76,64 @@ def filter_resolos(ti: tarfile.TarInfo):
     return ti
 
 
-def make_archive(env_name: str, output_filename: str):
+def make_archive(env_name: str, **kwargs):
+    verify_mutually_exclusive_options(
+        ["filename", "organizational_unit_id"],
+        ["--filename", "--organizational-unit-id"],
+        **kwargs,
+    )
+    if kwargs.get("filename"):
+        output_filename = kwargs.get("filename")
+        make_archive_file(env_name, output_filename=output_filename)
+        clog.info(f"Successfully archived resolos project to {output_filename}!")
+    elif kwargs.get("organizational_unit_id"):
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            output_filename = f"{tmpdirname}/{ARCHIVE_FILENAME}"
+            base_url = get_option(
+                kwargs, "base_url", f"No Yareta base url was found", pop=True
+            )
+            access_token = get_option(
+                kwargs, "access_token", f"No access token was found", pop=True
+            )
+            org_unit_id = get_option(
+                kwargs,
+                "organizational_unit_id",
+                f"No organizational unit id was found",
+                pop=True,
+            )
+            title = get_option(
+                kwargs, "title", f"Missing required option: --title", pop=True
+            )
+            year = get_option(
+                kwargs, "year", f"Missing required option: --year", pop=True
+            )
+            description = get_option(
+                kwargs,
+                "description",
+                f"Missing required option: --description",
+                pop=True,
+            )
+            make_archive_file(env_name, output_filename=output_filename)
+            clog.debug(f"Successfully created archive file {output_filename}!")
+            clog.info(f"Depositing resolos project archive to Yareta...")
+            deposit_id = deposit_archive(
+                output_filename,
+                base_url,
+                access_token,
+                org_unit_id,
+                title,
+                year,
+                description,
+                **kwargs,
+            )
+            clog.info(
+                f"Successfully deposited resolos project archive to Yareta, deposit id is '{deposit_id}'!"
+            )
+    else:
+        raise ResolosException(f"Unknown resolos archival destination")
+
+
+def make_archive_file(env_name: str, output_filename: str):
     resolos_dir = find_resolos_dir()
     project_dir = resolos_dir.parent
     files_path = str(project_dir.absolute())
@@ -90,9 +160,11 @@ def make_archive(env_name: str, output_filename: str):
         get_nondep_packages(env_name, filename=nondep_path)
         pax_headers = {
             TAR_HEADER_RESOLOS_VERSION: __version__,
-            TAR_HEADER_CREATED_ON: datetime.now().isoformat()
+            TAR_HEADER_CREATED_ON: datetime.now().isoformat(),
         }
-        with tarfile.open(output_filename, "w:gz", format=tarfile.PAX_FORMAT, pax_headers=pax_headers) as tar:
+        with tarfile.open(
+            output_filename, "w:gz", format=tarfile.PAX_FORMAT, pax_headers=pax_headers
+        ) as tar:
             tar.add(files_path, arcname=FILES_NAME, filter=filter_files)
             tar.add(resolos_path, arcname=RESOLOS_FOLDER_NAME, filter=filter_resolos)
             tar.add(pack_absolute_path, arcname=PACK_NAME)
@@ -101,7 +173,6 @@ def make_archive(env_name: str, output_filename: str):
             tar.add(explicit_packages_path, arcname=EXPLICIT_PACKAGES_NAME)
             tar.add(requirements_path, arcname=REQUIREMENTS_NAME)
             tar.add(nondep_path, arcname=NONDEP_PACKAGES_NAME)
-    clog.info(f"Successfully archived resolos project to {output_filename}!")
 
 
 def members_in_subfolder(tar, folder):
@@ -140,11 +211,15 @@ def load_archive_file(input_filename: str, files_path):
     new_env_name = f"resolos_env_{randomString()}"
     with tarfile.open(input_filename, "r:gz", format=tarfile.PAX_FORMAT) as tar:
         if TAR_HEADER_RESOLOS_VERSION not in tar.pax_headers:
-            raise NotAResolosArchiveError(f"{input_filename} is not an archive created by resolos.")
+            raise NotAResolosArchiveError(
+                f"{input_filename} is not an archive created by resolos."
+            )
         clog.info(f"Loading archive...")
         resolos_version = tar.pax_headers[TAR_HEADER_RESOLOS_VERSION]
         created_on = tar.pax_headers[TAR_HEADER_CREATED_ON]
-        clog.debug(f"Archive created by resolos version {resolos_version} on {created_on}")
+        clog.debug(
+            f"Archive created by resolos version {resolos_version} on {created_on}"
+        )
         clean_folder(files_path)
         extract_subfolder(tar, "files", path=str(files_path.absolute()))
         with tempfile.TemporaryDirectory() as tmpdirname:
@@ -265,27 +340,59 @@ def load_archive_file(input_filename: str, files_path):
                             pdc.write(project_settings)
 
 
-def load_archive(input_filename: str, confirm_needed: bool = True):
-    download_archive = False
-    for proto in SUPPORTED_REMOTE_PROTOCOLS:
-        if input_filename.startswith(proto):
-            download_archive = True
+def load_archive(**kwargs):
+    verify_mutually_exclusive_options(
+        ["url", "filename", "deposit_id"],
+        ["--url", "--filename", "--deposit-id"],
+        **kwargs,
+    )
     project_dir = find_project_dir()
-    if not confirm_needed or click.confirm(
+    if not kwargs.get("confirm_needed") or click.confirm(
         "This operation will overwrite the contents of your project. Continue?",
         default=True,
     ):
-        if download_archive:
-            clog.info(f"Downloading archive '{input_filename}'...")
-            with urllib.request.urlopen(input_filename) as response:
+        if kwargs.get("url"):
+            url = get_option(kwargs, "url", "Missing required option: --url")
+            supported_proto = False
+            for proto in SUPPORTED_REMOTE_PROTOCOLS:
+                if url.startswith(proto):
+                    supported_proto = True
+            if not supported_proto:
+                raise ResolosException(
+                    f"Unsupported protocol in url '{url}', "
+                    f"the only supported ones are: {SUPPORTED_REMOTE_PROTOCOLS}"
+                )
+            clog.info(f"Downloading archive '{url}'...")
+            with urllib.request.urlopen(url) as response:
                 with tempfile.NamedTemporaryFile(delete=True) as arch_file:
                     shutil.copyfileobj(response, arch_file)
                     load_archive_file(arch_file.name, project_dir)
                     clog.info(
-                        f"Successfully loaded archive '{input_filename}' into project '{project_dir.absolute()}'"
+                        f"Successfully loaded archive '{url}' into project '{project_dir.absolute()}'"
                     )
-        else:
+        elif kwargs.get("filename"):
+            input_filename = get_option(
+                kwargs, "filename", "Missing required option: --filename"
+            )
             load_archive_file(input_filename, project_dir)
             clog.info(
                 f"Successfully loaded archive '{input_filename}' into project '{project_dir.absolute()}'"
             )
+        elif kwargs.get("deposit_id"):
+            base_url = get_option(kwargs, "base_url", f"No Yareta base url was found")
+            access_token = get_option(
+                kwargs, "access_token", f"No access token was found"
+            )
+            deposit_id = get_option(
+                kwargs, "deposit_id", "Missing required option: --deposit-id"
+            )
+            with tempfile.NamedTemporaryFile(delete=True) as arch_file:
+                download_archive(
+                    arch_file.name, ARCHIVE_FILENAME, deposit_id, access_token, base_url
+                )
+                load_archive_file(arch_file.name, project_dir)
+                clog.info(
+                    f"Successfully loaded archive from Yareta deposit '{deposit_id}' into project '{project_dir.absolute()}'"
+                )
+        else:
+            raise ResolosException(f"Missing source specification")
