@@ -1,6 +1,19 @@
-# Resolos 
+[![PyPI version](https://badge.fury.io/py/resolos.svg)](https://pypi.org/project/resolos/) 
+[![Docs](https://readthedocs.org/projects/resolos/badge/)](https://resolos.readthedocs.io/en/latest/)
+[![Integration tests](https://github.com/nuvolos-cloud/resolos/actions/workflows/salid-integration-test.yaml/badge.svg)](https://github.com/nuvolos-cloud/resolos/actions/workflows/salid-integration-test.yaml)
 
-Reproducible research made easy
+```
+                     _           
+                    | |          
+ _ __ ___  ___  ___ | | ___  ___ 
+| '__/ _ \/ __|/ _ \| |/ _ \/ __| 
+| | |  __/\__ \ (_) | | (_) \__ \ 
+|_|  \___||___/\___/|_|\___/|___/ 
+```
 
-Documentation available at [resolos.readthedocs.io](https://resolos.readthedocs.io/en/latest/).
+Resolos is a toolkit written in Python for maintaining reproducible environments for scientific computations.
+It's main goal is to enable researchers to easily replicate environments through space (running code on HPC environment)
+and time (environment preservation for long term archival).
+
+For installation and detailed usage, check out the [documentation](https://resolos.readthedocs.io/en/latest/).
 

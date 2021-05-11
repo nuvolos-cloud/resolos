@@ -1,9 +1,16 @@
-# Resolos
+[![PyPI version](https://badge.fury.io/py/resolos.svg)](https://pypi.org/project/resolos/) 
+[![GitHub version](https://badge.fury.io/gh/nuvolos-cloud%2Fresolos.svg)](https://github.com/nuvolos-cloud/resolos)
+[![Integration tests](https://github.com/nuvolos-cloud/resolos/actions/workflows/salid-integration-test.yaml/badge.svg)](https://github.com/nuvolos-cloud/resolos/actions/workflows/salid-integration-test.yaml)
 
-This is the documentation of the [resolos](https://github.com/nuvolos-cloud/resolos) python package.
+# Introduction
 
-Resolos is a toolkit for maintaining reproducible environments for scientific computations.
-The main resolos object is a project, which is nothing else than a folder on the filesystem associated
+Resolos is a toolkit written in Python for maintaining reproducible environments for scientific computations.
+It's main goal is to enable researchers to easily replicate environments through space (running code on HPC environment)
+and time (environment preservation for long term archival).
+
+## How does it work?
+
+The core resolos concept is a project, which is nothing else than a folder on the filesystem associated
 with a conda environment. The project folder contains the source code, while the conda environment is 
 used as an execution environment. With the two combined, resolos is capable of the following:
 
@@ -12,6 +19,12 @@ used as an execution environment. With the two combined, resolos is capable of t
 as accurately as possible
 - sync project files and environments between a local development machine and a remote HPC cluster
 - submit and monitor jobs on remote HPC clusters
+
+## Why resolos?
+
+- Building on top of conda, it's language agnostic
+- Needs only Python 3 to run
+- It's open source 
 
 The following section details the installation of resolos and its dependencies.
 

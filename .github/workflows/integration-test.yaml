@@ -1,4 +1,4 @@
-name: Integration test with SLURM run manually
+name: Integration tests
 
 on:
   push:
