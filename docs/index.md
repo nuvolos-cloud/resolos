@@ -1,6 +1,6 @@
 [![PyPI version](https://badge.fury.io/py/resolos.svg)](https://pypi.org/project/resolos/) 
 [![GitHub version](https://badge.fury.io/gh/nuvolos-cloud%2Fresolos.svg)](https://github.com/nuvolos-cloud/resolos)
-[![Integration tests](https://github.com/nuvolos-cloud/resolos/actions/workflows/salid-integration-test.yaml/badge.svg)](https://github.com/nuvolos-cloud/resolos/actions/workflows/salid-integration-test.yaml)
+[![Integration tests](https://github.com/nuvolos-cloud/resolos/actions/workflows/integration-test.yaml/badge.svg)](https://github.com/nuvolos-cloud/resolos/actions/workflows/integration-test.yaml)
 
 # Introduction
 
@@ -19,12 +19,6 @@ used as an execution environment. With the two combined, resolos is capable of t
 as accurately as possible
 - sync project files and environments between a local development machine and a remote HPC cluster
 - submit and monitor jobs on remote HPC clusters
-
-## Why resolos?
-
-- Building on top of conda, it's language agnostic
-- Needs only Python 3 to run
-- It's open source 
 
 The following section details the installation of resolos and its dependencies.
 

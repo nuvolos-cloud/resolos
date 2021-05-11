@@ -1,6 +1,7 @@
 [![PyPI version](https://badge.fury.io/py/resolos.svg)](https://pypi.org/project/resolos/) 
 [![Docs](https://readthedocs.org/projects/resolos/badge/)](https://resolos.readthedocs.io/en/latest/)
-[![Integration tests](https://github.com/nuvolos-cloud/resolos/actions/workflows/salid-integration-test.yaml/badge.svg)](https://github.com/nuvolos-cloud/resolos/actions/workflows/salid-integration-test.yaml)
+[![Integration tests](https://github.com/nuvolos-cloud/resolos/actions/workflows/integration-test.yaml/badge.svg)](https://github.com/nuvolos-cloud/resolos/actions/workflows/integration-test.yaml)
+
 
 ```
                      _           
