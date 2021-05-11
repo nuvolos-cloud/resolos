@@ -225,7 +225,17 @@ def get_ssh_key():
 
 
 def info():
-    clog.info(f"Resolos version: {__version__}")
+    clog.info(
+        """
+                     _           
+                    | |          
+ _ __ ___  ___  ___ | | ___  ___ 
+| '__/ _ \/ __|/ _ \| |/ _ \/ __| 
+| | |  __/\__ \ (_) | | (_) \__ \ 
+|_|  \___||___/\___/|_|\___/|___/ 
+"""
+    )
+    clog.info(f"Version: {__version__}")
     gc = get_global_dict_config().read()
     clog.info(f"The global config ({get_default_config_path()}):\n{yaml.dump(gc)}")
     grc = get_global_remotes_dict_config().read()
