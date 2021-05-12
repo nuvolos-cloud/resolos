@@ -25,7 +25,7 @@ setup(
     author="Alphacruncher",
     author_email="support@nuvolos.cloud",
     license="MIT",
-    packages=["resolos"],
+    packages=["resolos", "resolos.storage"],
     install_requires=[
         "click",
         "click-logging",
