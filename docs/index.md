@@ -1,5 +1,5 @@
-[![PyPI version](https://badge.fury.io/py/resolos.svg)](https://pypi.org/project/resolos/) 
-[![GitHub version](https://badge.fury.io/gh/nuvolos-cloud%2Fresolos.svg)](https://github.com/nuvolos-cloud/resolos)
+[![PyPI version](https://img.shields.io/pypi/v/resolos)](https://pypi.org/project/resolos/) 
+[![GitHub version](https://img.shields.io/github/v/release/nuvolos-cloud/resolos)](https://github.com/nuvolos-cloud/resolos)
 [![Integration tests](https://github.com/nuvolos-cloud/resolos/actions/workflows/integration-test.yaml/badge.svg)](https://github.com/nuvolos-cloud/resolos/actions/workflows/integration-test.yaml)
 
 # Introduction

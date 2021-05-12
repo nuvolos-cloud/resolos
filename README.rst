@@ -1,4 +1,4 @@
-.. image:: https://badge.fury.io/gh/nuvolos-cloud%2Fresolos.svg
+.. image:: https://img.shields.io/github/v/release/nuvolos-cloud/resolos
     :target: https://github.com/nuvolos-cloud/resolos
 
 .. image:: https://readthedocs.org/projects/resolos/badge
