@@ -1,3 +1,6 @@
 .idea
 __pycache__
 .DS_Store
+.eggs
+dist
+resolos.egg-info

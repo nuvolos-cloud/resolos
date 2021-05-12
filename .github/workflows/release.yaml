@@ -1,0 +1,28 @@
+name: Release package to PyPI
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  ubuntu:
+    name: Publish package to PyPI
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pull and checkout branch
+        uses: actions/checkout@master
+
+      - name: Install python
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          auto-update-conda: false
+          python-version: 3.8
+
+      - name: Build and upload package
+        run: |
+          echo "Installing twine"
+          pip install twine
+          echo "Building package"
+          python setup.py sdist
+          echo "Uploading package"
+          twine upload -u __token__ -p ${{ secrets.PYPI_TOKEN }}
