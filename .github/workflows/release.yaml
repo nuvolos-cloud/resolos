@@ -25,4 +25,4 @@ jobs:
           echo "Building package"
           python setup.py sdist
           echo "Uploading package"
-          twine upload -u __token__ -p ${{ secrets.PYPI_TOKEN }}
+          twine upload -u __token__ -p ${{ secrets.PYPI_TOKEN }} dist/*
