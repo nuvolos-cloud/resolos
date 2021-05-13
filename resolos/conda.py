@@ -5,7 +5,6 @@ from .config import (
     get_project_settings_for_remote,
     get_project_env,
     randomString,
-    ver_re,
     CONDA_MIN_VERSION,
     read_project_remote_config,
     write_project_remote_config,
@@ -20,12 +19,16 @@ import json
 import ast
 from semver import VersionInfo
 from datetime import datetime
+import re
+
+
+conda_ver_re = re.compile(r"conda (\d+.\d+.\d+)")
 
 
 def verify_conda_version(output):
-    m = ver_re.search(output)
+    m = conda_ver_re.search(output)
     if m:
-        conda_ver = VersionInfo.parse(m.group())
+        conda_ver = VersionInfo.parse(m.group(1))
         if conda_ver < CONDA_MIN_VERSION:
             raise DependencyVersionError(
                 f"Resolos requires a minimum conda version {CONDA_MIN_VERSION}, "
