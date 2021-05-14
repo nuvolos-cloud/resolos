@@ -13,6 +13,7 @@ from .exception import (
     RemoteCommandError,
 )
 from semver import VersionInfo
+from pathlib import Path
 
 CMD_BEGIN = "-----------------RESOLOS_BEGIN-----------------"
 CMD_END = "-----------------RESOLOS_END-----------------"
@@ -78,15 +79,11 @@ def run_shell_cmd(
     waited = 0
     stdout = ""
     if shell_type == "bash_interactive_login":
-        bash_cmd = f"bash -i -l -c {quote(f'echo {CMD_BEGIN} && ' + cmd + f' && echo {CMD_END}; exit 2>/dev/null')}"
+        bash_cmd = f"bash -i -l -c {quote(f'cd {Path.cwd()} && echo {CMD_BEGIN} && ' + cmd + f' && echo {CMD_END}; exit 2>/dev/null')}"
     elif shell_type == "bash_login":
-        bash_cmd = (
-            f"bash -l -c {quote(f'echo {CMD_BEGIN} && ' + cmd + f' && echo {CMD_END}')}"
-        )
+        bash_cmd = f"bash -l -c {quote(f'cd {Path.cwd()} && echo {CMD_BEGIN} && ' + cmd + f' && echo {CMD_END}')}"
     elif shell_type == "bash_non_login":
-        bash_cmd = (
-            f"bash -c {quote(f'echo {CMD_BEGIN} && ' + cmd + f' && echo {CMD_END}')}"
-        )
+        bash_cmd = f"bash -c {quote(f'cd {Path.cwd()} && echo {CMD_BEGIN} && ' + cmd + f' && echo {CMD_END}')}"
     else:
         bash_cmd = quote(f"echo {CMD_BEGIN} && " + cmd + f" && echo {CMD_END}")
     clog.debug(f"Running command '{bash_cmd}'...")
