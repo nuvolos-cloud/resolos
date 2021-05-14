@@ -6,7 +6,6 @@ from .config import (
     randomString,
     get_ssh_key,
     SSH_SERVERALIVEINTERVAL,
-    ver_re,
     UNISON_VERSION,
 )
 from .exception import (
@@ -17,10 +16,13 @@ from .exception import (
 )
 from .shell import run_shell_cmd, run_ssh_cmd
 from .platform import find_project_dir, get_unison_config_folder
-import re
 import click
 from semver import VersionInfo
 from datetime import datetime
+import re
+
+
+unison_ver_re = re.compile(r"unison version (\d+.\d+.\d+)")
 
 
 def unison_base_command():
@@ -28,7 +30,7 @@ def unison_base_command():
 
 
 def verify_unison_version(output):
-    m = ver_re.search(output)
+    m = unison_ver_re.search(output)
     if m:
         unison_ver = VersionInfo.parse(m.group())
         if unison_ver != UNISON_VERSION:
@@ -45,7 +47,7 @@ def verify_unison_version(output):
 
 
 def check_unison_installed_local():
-    ret_val, output = run_shell_cmd("unison -version")
+    ret_val, output = run_shell_cmd("export PATH=~/bin:$PATH && unison -version")
     if ret_val != 0:
         raise MissingDependency(
             f"Unison test command 'unison -version' raised error on local machine:\n\n{output}\n\n"
@@ -55,7 +57,9 @@ def check_unison_installed_local():
 
 
 def check_unison_installed_remote(remote_settings):
-    ret_val, output = run_ssh_cmd(remote_settings, "unison -version")
+    ret_val, output = run_ssh_cmd(
+        remote_settings, f"{remote_settings['unison_path']} -version"
+    )
     if ret_val != 0:
         raise MissingDependency(
             f"Unison test command 'unison -version' raised error on remote {remote_settings['name']}:\n\n{output}\n\n"

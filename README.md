@@ -18,3 +18,10 @@ and time (environment preservation for long term archival).
 
 For installation and detailed usage, check out the [documentation](https://resolos.readthedocs.io/en/latest/).
 
+## Latest development version
+
+You can install the latest development version using pip directly with
+
+```
+pip install git+https://github.com/nuvolos-cloud/resolos.git
+```
