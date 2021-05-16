@@ -1,7 +1,7 @@
 markdown
 click
 mkdocs-click
-click-logging
+click-log
 pyyaml
 semver
 pytest
