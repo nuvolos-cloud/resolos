@@ -28,7 +28,7 @@ setup(
     packages=["resolos", "resolos.storage"],
     install_requires=[
         "click",
-        "click-logging",
+        "click-log",
         "pyyaml",
         "semver",
         "conda-pack",

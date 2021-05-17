@@ -6,7 +6,7 @@ from .config import (
     info,
     verify_mutually_exclusive_options,
 )
-import click_logging
+import click_log
 from .logging import clog
 from .remote import (
     get_remote,
@@ -34,7 +34,7 @@ import yaml
 
 
 @click.group("res")
-@click_logging.simple_verbosity_option(clog)
+@click_log.simple_verbosity_option(clog)
 @click.pass_context
 def res(ctx):
     """
