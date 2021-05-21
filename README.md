@@ -25,3 +25,7 @@ You can install the latest development version using pip directly with
 ```
 pip install git+https://github.com/nuvolos-cloud/resolos.git
 ```
+
+## Acknowledgements
+
+The Resolos project has been partly funded by UNIGE within the Geneva cantonal program “digital infrastructure and services for researchers (PL12146)
