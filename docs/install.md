@@ -65,7 +65,7 @@ wget https://raw.githubusercontent.com/Homebrew/homebrew-core/0edb12c144c6f64e6c
 This should install version `unison version 2.51.3 (ocaml 4.10.0)`. To make sure, check with 
 
 ```
-unsion -version
+unison -version
 ```
 
 ### Windows
