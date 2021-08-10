@@ -29,3 +29,5 @@ pip install git+https://github.com/nuvolos-cloud/resolos.git
 ## Acknowledgements
 
 The Resolos project has been partly funded by UNIGE within the Geneva cantonal program “digital infrastructure and services for researchers (PL12146)
+
+The authors are thankful for support from the Euler institute at Università della Svizzera italiana in testing Resolos on their HPC infra.
