@@ -266,9 +266,11 @@ def execute_conda_command_local_and_remote(
         clog.info(success_message)
 
 
-def install_conda_packages(package_list, target=None):
+def install_conda_packages(package_list, target=None, channel=None):
     packages = " ".join(package_list)
     install_command = f"install -y {packages}"
+    if channel:
+        install_command = f"{install_command} --channel {channel}"
     if target:
         remote_id = target["name"]
         local_env, remote_env, remote_path = get_project_settings_for_remote(remote_id)
@@ -278,7 +280,7 @@ def install_conda_packages(package_list, target=None):
         execute_remote_conda_command(
             install_command,
             target,
-            env=remote_env,
+            env=remote_env
         )
     else:
         clog.info(f"Installing packages {packages} in local environment")
