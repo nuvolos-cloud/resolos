@@ -192,18 +192,27 @@ def execute_command_in_remote_conda_env(cmd, remote_settings, env, stdout_as_inf
     return ret_val, output
 
 
-def execute_local_conda_command(cmd, env=None, stdout_as_info=False):
+def execute_local_conda_command(cmd, env=None, stdout_as_info=False, mamba=None):
     if env:
         if env.startswith("source "):
-            conda_cmd = f"{env} && conda {cmd}"
+            if mamba:
+                conda_cmd = f"{env} && mamba {cmd}"
+            else:
+                conda_cmd = f"{env} && conda {cmd}"
         else:
             # Multiple conda installations can cause problems with environment activation when running
             # in a subshell
             # https://github.com/conda/conda/issues/9392
             # Workaround: do a deactivate first
-            conda_cmd = f"conda deactivate && conda activate {env} && conda {cmd}"
+            if mamba:
+                conda_cmd = f"conda deactivate && conda activate {env} && mamba {cmd}"
+            else:
+                conda_cmd = f"conda deactivate && conda activate {env} && conda {cmd}"
     else:
-        conda_cmd = f"conda {cmd}"
+        if mamba:
+            conda_cmd = f"mamba {cmd}"
+        else:
+            conda_cmd = f"conda {cmd}"
     ret_val, output = run_shell_cmd(conda_cmd, stdout_as_info=stdout_as_info)
     if ret_val != 0:
         raise LocalCommandError(
@@ -212,14 +221,24 @@ def execute_local_conda_command(cmd, env=None, stdout_as_info=False):
     return ret_val, output
 
 
-def execute_remote_conda_command(cmd, remote_settings, env=None, stdout_as_info=True):
+def execute_remote_conda_command(cmd, remote_settings, env=None, stdout_as_info=True, mamba=None):
     if env:
         if env.startswith("source "):
-            conda_cmd = f"{env} && conda {cmd}"
+            if mamba:
+                conda_cmd = f"{env} && mamba {cmd}"
+            else:
+                conda_cmd = f"{env} && conda {cmd}"
         else:
-            conda_cmd = f"{remote_settings['conda_load_command']} && conda activate {env} && conda {cmd}"
+            if mamba:
+                conda_cmd = f"{remote_settings['conda_load_command']} && conda activate {env} && mamba {cmd}"
+            else:
+                conda_cmd = f"{remote_settings['conda_load_command']} && conda activate {env} && conda {cmd}"
     else:
-        conda_cmd = f"{remote_settings['conda_load_command']} && conda {cmd}"
+        if mamba:
+            conda_cmd = f"{remote_settings['conda_load_command']} && mamba {cmd}"
+        else:
+            conda_cmd = f"{remote_settings['conda_load_command']} && conda {cmd}"
+        
     ret_val, output = run_ssh_cmd(
         remote_settings,
         conda_cmd,
@@ -266,7 +285,7 @@ def execute_conda_command_local_and_remote(
         clog.info(success_message)
 
 
-def install_conda_packages(package_list, target=None, channel=None):
+def install_conda_packages(package_list, target=None, channel=None, mamba=None):
     packages = " ".join(package_list)
     install_command = f"install -y {packages}"
     if channel:
@@ -280,7 +299,8 @@ def install_conda_packages(package_list, target=None, channel=None):
         execute_remote_conda_command(
             install_command,
             target,
-            env=remote_env
+            env=remote_env,
+            mamba=mamba
         )
     else:
         clog.info(f"Installing packages {packages} in local environment")
@@ -291,6 +311,7 @@ def install_conda_packages(package_list, target=None, channel=None):
             install_command,
             env=local_env,
             stdout_as_info=True,
+            mamba=mamba
         )
 
 

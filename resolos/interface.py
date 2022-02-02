@@ -670,18 +670,24 @@ def res_archive_load(ctx, **kwargs):
     required=False,
 )
 @click.option(
+    "-c"
+    "--channel",
+    help="Specify the conda channel from which to install the packages.",
+    required=False,
+)
+@click.option(
     "--all-remotes",
     is_flag=True,
     help="Also install the package to all configured remotes",
     required=False,
 )
 @click.option(
-    "-c"
-    "--channel",
+    "--mamba",
     is_flag=True,
-    help="Specify the conda channel from which to install the packages.",
+    help="Try to use mamba instead of conda for dependency resolution.",
     required=False,
 )
+
 @click.pass_context
 def res_install(ctx, packages, **kwargs):
     """
@@ -690,18 +696,19 @@ def res_install(ctx, packages, **kwargs):
     """
     all_remotes = kwargs.get("all_remotes")
     channel = kwargs.get("channel")
+    mamba=kwargs.get("mamba")
     if all_remotes:
         install_conda_packages(packages, channel=channel)
         db = read_remote_db()
         remote_ids = list_remote_ids(db)
         for remote_id in remote_ids:
             remote_settings = get_remote(db, remote_id)
-            install_conda_packages(packages, target=remote_settings, channel=channel)
+            install_conda_packages(packages, target=remote_settings, channel=channel, mamba=mamba)
     else:
         try:
             remote_settings = get_remote(read_remote_db(), kwargs.get("remote"))
             install_conda_packages(packages, channel=channel)
-            install_conda_packages(packages, target=remote_settings, channel=channel)
+            install_conda_packages(packages, target=remote_settings, channel=channel, mamba=mamba)
         except NoRemotesError as ex:
             clog.info(
                 "No remotes were specified, will only install the package locally"
