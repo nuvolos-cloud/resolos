@@ -682,8 +682,10 @@ def res_archive_load(ctx, **kwargs):
     required=False,
 )
 @click.option(
+    "-M",
     "--mamba",
     is_flag=True,
+    default=False,
     help="Try to use mamba instead of conda for dependency resolution.",
     required=False,
 )
@@ -696,8 +698,9 @@ def res_install(ctx, packages, **kwargs):
     all_remotes = kwargs.get("all_remotes")
     channel = kwargs.get("channel")
     mamba = kwargs.get("mamba")
+
     if all_remotes:
-        install_conda_packages(packages, channel=channel)
+        install_conda_packages(packages, channel=channel, mamba=mamba)
         db = read_remote_db()
         remote_ids = list_remote_ids(db)
         for remote_id in remote_ids:
@@ -708,7 +711,7 @@ def res_install(ctx, packages, **kwargs):
     else:
         try:
             remote_settings = get_remote(read_remote_db(), kwargs.get("remote"))
-            install_conda_packages(packages, channel=channel)
+            install_conda_packages(packages, channel=channel, mamba=mamba)
             install_conda_packages(
                 packages, target=remote_settings, channel=channel, mamba=mamba
             )
@@ -716,7 +719,7 @@ def res_install(ctx, packages, **kwargs):
             clog.info(
                 "No remotes were specified, will only install the package locally"
             )
-            install_conda_packages(packages, channel=channel)
+            install_conda_packages(packages, channel=channel, mamba=mamba)
 
     clog.info(f"Successfully installed packages {packages}")
 
