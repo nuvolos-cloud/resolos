@@ -221,7 +221,9 @@ def execute_local_conda_command(cmd, env=None, stdout_as_info=False, mamba=None)
     return ret_val, output
 
 
-def execute_remote_conda_command(cmd, remote_settings, env=None, stdout_as_info=True, mamba=None):
+def execute_remote_conda_command(
+    cmd, remote_settings, env=None, stdout_as_info=True, mamba=None
+):
     if env:
         if env.startswith("source "):
             if mamba:
@@ -238,7 +240,7 @@ def execute_remote_conda_command(cmd, remote_settings, env=None, stdout_as_info=
             conda_cmd = f"{remote_settings['conda_load_command']} && mamba {cmd}"
         else:
             conda_cmd = f"{remote_settings['conda_load_command']} && conda {cmd}"
-        
+
     ret_val, output = run_ssh_cmd(
         remote_settings,
         conda_cmd,
@@ -297,10 +299,7 @@ def install_conda_packages(package_list, target=None, channel=None, mamba=None):
         if not check_conda_env_exists_remote(target, remote_env):
             create_conda_env_remote(target, remote_env)
         execute_remote_conda_command(
-            install_command,
-            target,
-            env=remote_env,
-            mamba=mamba
+            install_command, target, env=remote_env, mamba=mamba
         )
     else:
         clog.info(f"Installing packages {packages} in local environment")
@@ -308,10 +307,7 @@ def install_conda_packages(package_list, target=None, channel=None, mamba=None):
         if not check_conda_env_exists_local(local_env):
             create_conda_env_local(local_env)
         execute_local_conda_command(
-            install_command,
-            env=local_env,
-            stdout_as_info=True,
-            mamba=mamba
+            install_command, env=local_env, stdout_as_info=True, mamba=mamba
         )
 
 
