@@ -34,6 +34,7 @@ setup(
         "conda-pack",
         "requests",
         "pyjwt",
+        "pipdeptree",
     ],
     zip_safe=False,
     entry_points="""

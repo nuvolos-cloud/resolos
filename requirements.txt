@@ -7,3 +7,4 @@ semver
 pytest
 requests
 pyjwt
+pipdeptree
