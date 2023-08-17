@@ -25,6 +25,7 @@ from .conda import (
     install_conda_packages,
     uninstall_conda_packages,
     sync_env_and_files,
+    sync_env_and_files_with_pip_deps,
 )
 from .archive import make_archive, load_archive
 from .job import job_cancel, job_list, job_status, job_submit, job_run
@@ -396,16 +397,35 @@ def res_remote_list(ctx):
     help="Also update the conda environment on remote with the packages installed on the local machine",
     required=False,
 )
+@click.option(
+    "--pip",
+    is_flag=True,
+    help="Also update the pip and conda environment on remote with the packages installed on the local machine",
+    required=False,
+)
+@click.option(
+    "-M",
+    "--mamba",
+    is_flag=True,
+    default=False,
+    help="Try to use mamba instead of conda for dependency resolution and installation on the remote.",
+    required=False,
+)
 @click.pass_context
 def res_sync(ctx, **kwargs):
     """
     Performs a 2-way sync on the project files and environment with the selected remote.
+    If the --pip flag is specified, pip-installed packages are synced from local to remote.
     In case only one remote is configured, the remote does not need to be specified.
     """
     remote_settings = get_remote(read_remote_db(), kwargs.get("remote"))
 
     if kwargs.get("env"):
         sync_env_and_files(remote_settings)
+    elif kwargs.get("pip"):
+        sync_env_and_files_with_pip_deps(
+            remote_settings=remote_settings, mamba=kwargs.get("mamba")
+        )
     else:
         sync_files(remote_settings)
     clog.info(f"Sync ran with {remote_settings['name']}!")
