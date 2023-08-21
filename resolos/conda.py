@@ -620,10 +620,10 @@ def sync_env_and_files_with_pip_deps(remote_settings, mamba=False):
 
     channels = ["-c " + c for c in env_data["channels"]]
 
-    all_conda_packages = []
+    all_conda_packages = {}
     for package in env_data["dependencies"]:
         if isinstance(package, str):  # Pip package list is a dict, skipped
-            all_conda_packages.append(
+            all_conda_packages[package.split("=")[0]] = (
                 package.split("=")[0] + "==" + package.split("=")[1]
             )
 
@@ -636,8 +636,9 @@ def sync_env_and_files_with_pip_deps(remote_settings, mamba=False):
     root_pip_packages = []
     for p in dep_tree:
         versioned_package = f'{p["package_name"]}=={p["installed_version"]}'
-        if versioned_package in all_conda_packages:
-            root_conda_packages.append(versioned_package)
+        # Compare only package names as reported conda/pip versions can differ, see the case of conda-tree
+        if p["package_name"] in all_conda_packages:
+            root_conda_packages.append(all_conda_packages[p["package_name"]])
         else:
             root_pip_packages.append(versioned_package)
     clog.debug(
