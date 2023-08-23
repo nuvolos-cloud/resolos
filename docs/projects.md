@@ -54,3 +54,9 @@ r3s sync -r <remote_id>
 
 You may omit the remote_id if there is only one remote defined. In case you want to sync the conda environment
 from your local machine onto the remove env, you can use the `--env` flag as described in [Working with projects](work_with_projects.md).
+
+If you wish to sync both conda and pip packages of your local environment with the remote environment, you should use `--pip` flag:
+
+```
+r3s sync -r <remote_id> --pip
+```

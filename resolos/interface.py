@@ -482,6 +482,12 @@ def res_job(ctx, **kwargs):
     type=str,
     help="The number of nodes to reserve for the job",
 )
+@click.option(
+    "-g",
+    "--gpus",
+    type=str,
+    help="GPU resources to reserve for the job",
+)
 @click.pass_context
 def res_job_run(ctx, command, **kwargs):
     """

@@ -55,6 +55,7 @@ def job_run(
     ntasks=None,
     cpus_per_task=None,
     nodes=None,
+    gpus=None,
 ):
     full_cmd = (
         f"cd {remote_path} && "
@@ -68,6 +69,8 @@ def job_run(
         full_cmd = full_cmd + f" -c {cpus_per_task}"
     if nodes:
         full_cmd = full_cmd + f" -N {nodes}"
+    if gpus:
+        full_cmd = full_cmd + f" --gpus={gpus}"
 
     if not check_conda_env_exists_remote(remote_settings, remote_env):
         clog.info("Syncing remote files and conda environment...")

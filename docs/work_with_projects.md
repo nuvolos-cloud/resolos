@@ -55,6 +55,13 @@ You can run simple jobs with `r3s job run`:
 r3s job -r <remote_id> run "python my_script.py"
 ```
 
+You can specify the GPU resources you need with the `--gpus` option:
+
+```
+r3s job -r <remote_id> run --gpus=A10:1  "python my_script.py"
+```
+
+
 If you want to fine-tune the submission details, you may create a Slurm submission script first, and use
 
 ```
