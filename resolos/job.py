@@ -59,7 +59,7 @@ def job_run(
 ):
     full_cmd = (
         f"cd {remote_path} && "
-        f'sbatch --wrap "{remote_settings["conda_load_command"]} && conda activate {remote_env} && {cmd}"'
+        f'sbatch --wrap \'/bin/bash -c "{remote_settings["conda_load_command"]} && conda activate {remote_env} && {cmd}"\''
     )
     if partition:
         full_cmd = full_cmd + f" -p {partition}"
