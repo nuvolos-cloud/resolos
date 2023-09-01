@@ -25,7 +25,7 @@ from .conda import (
     install_conda_packages,
     uninstall_conda_packages,
     sync_env_and_files,
-    sync_env_and_files_with_pip_deps,
+    sync_env_and_files_with_auto_resolve_deps,
 )
 from .archive import make_archive, load_archive
 from .job import job_cancel, job_list, job_status, job_submit, job_run
@@ -398,9 +398,11 @@ def res_remote_list(ctx):
     required=False,
 )
 @click.option(
-    "--pip",
+    "--auto-resolve-deps",
     is_flag=True,
-    help="Also update the pip and conda environment on remote with the packages installed on the local machine",
+    help="Only pin down version of root packages (packages that are not dependencies of other packages)."
+    "This is useful when some dependencies are not available on the remote "
+    "in the exact same version as on the local machine.",
     required=False,
 )
 @click.option(
@@ -414,16 +416,17 @@ def res_remote_list(ctx):
 @click.pass_context
 def res_sync(ctx, **kwargs):
     """
-    Performs a 2-way sync on the project files and environment with the selected remote.
-    If the --pip flag is specified, pip-installed packages are synced from local to remote.
+    Performs a 2-way sync on the project files
+    If the --env flag is specified, locally installed packages are synced to the remote environment.
+    If the --auto-resolve-deps flag is specified, dependent package versions will not be pinned.
     In case only one remote is configured, the remote does not need to be specified.
     """
     remote_settings = get_remote(read_remote_db(), kwargs.get("remote"))
 
     if kwargs.get("env"):
         sync_env_and_files(remote_settings)
-    elif kwargs.get("pip"):
-        sync_env_and_files_with_pip_deps(
+    elif kwargs.get("auto-resolve-deps"):
+        sync_env_and_files_with_auto_resolve_deps(
             remote_settings=remote_settings, mamba=kwargs.get("mamba")
         )
     else:

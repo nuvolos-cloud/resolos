@@ -387,6 +387,24 @@ def explicit_package_list(env_name: str, target=None, filename=None):
                 f.write(output)
 
 
+def pip_installed_package_list(env_name: str, target=None, filename=None):
+    env_yaml = execute_conda_command(
+        f"env export", target=target, env=env_name, stdout_as_info=False
+    )
+    env = yaml.safe_load(env_yaml)
+
+    pip_packages = []
+    for dep in env["dependencies"]:
+        if isinstance(dep, dict) and "pip" in dep:
+            pip_packages = dep["pip"]
+
+    if filename:
+        with open(filename, "w") as f:
+            f.write("\n".join(pip_packages))
+
+    return pip_packages
+
+
 def get_requirements(env_name, filename=None):
     ret_val, output = execute_local_conda_command(f"list --json", env=env_name)
     if ret_val != 0:
@@ -482,14 +500,23 @@ def sync_env_and_files(remote_settings):
         )
         explicit_packages_file = env_folder / "spec-file.txt"
         explicit_package_list(local_env, filename=explicit_packages_file)
+        requirements_file = env_folder / "requirements.txt"
+        pip_installed_package_list(local_env, filename=requirements_file)
         clog.info(f"Syncing project files...")
         sync_files(remote_settings)
         if not check_conda_env_exists_remote(remote_settings, remote_env):
             create_conda_env_remote(remote_settings, remote_env)
         try:
+            clog.info("Syncing conda-installed packages...")
             execute_remote_conda_command(
                 f"install --name {remote_env} --file {remote_path}/.env/spec-file.txt",
                 remote_settings,
+            )
+            clog.info("Syncing pip-installed packages...")
+            execute_command_in_remote_conda_env(
+                cmd=f"pip install --no-cache-dir -r {remote_path}/.env/requirements.txt",
+                remote_settings=remote_settings,
+                env=remote_env,
             )
             project_remote_settings = read_project_remote_config(remote_id)
             project_remote_settings["last_env_sync"] = datetime.utcnow()
@@ -580,10 +607,10 @@ def get_dependency_tree(pipenv_json: pathlib.Path, env_name: str):
         )
 
 
-def sync_env_and_files_with_pip_deps(remote_settings, mamba=False):
+def sync_env_and_files_with_auto_resolve_deps(remote_settings, mamba=False):
     """
     Reworked environment sync to include pip-installed local dependencies,
-    like TensorFlow and PyTorch.
+    like TensorFlow and PyTorch, without explicitly specifying dependent package versions.
     The sync aims to install the same versions of conda/pip packages as in the local environment.
     It will still only use package version specifications if the local and remote platforms are identical,
     it will not match for exact python version/architecture/artifact ID.
