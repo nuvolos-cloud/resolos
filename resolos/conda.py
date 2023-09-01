@@ -388,7 +388,7 @@ def explicit_package_list(env_name: str, target=None, filename=None):
 
 
 def pip_installed_package_list(env_name: str, target=None, filename=None):
-    env_yaml = execute_conda_command(
+    ret_val, env_yaml = execute_conda_command(
         f"env export", target=target, env=env_name, stdout_as_info=False
     )
     env = yaml.safe_load(env_yaml)
