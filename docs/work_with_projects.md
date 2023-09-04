@@ -58,7 +58,7 @@ r3s job -r <remote_id> run "python my_script.py"
 You can specify the GPU resources you need with the `--gpus` option:
 
 ```
-r3s job -r <remote_id> run --gpus=A10:1  "python my_script.py"
+r3s job -r <remote_id> run --gpus=1  "python my_script.py"
 ```
 
 
