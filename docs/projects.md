@@ -54,9 +54,11 @@ r3s sync -r <remote_id>
 
 You may omit the remote_id if there is only one remote defined. In case you want to sync the conda environment
 from your local machine onto the remove env, you can use the `--env` flag as described in [Working with projects](work_with_projects.md).
+The environment sync will try to install pip packages on the remote as well.
 
-If you wish to sync both conda and pip packages of your local environment with the remote environment, you should use `--pip` flag:
+In case you have a problem syncing your environment due to a dependency problem,
+you can try to use the `--auto-resolve-deps flag`. This flag will trigger resolos
+to identify dependent packages and impose no version constraints on them. This
+may lead to a successful environment sync, but may also lead to a broken environment
+with incompatible packages. Use with caution.
 
-```
-r3s sync -r <remote_id> --pip
-```
