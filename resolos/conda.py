@@ -514,7 +514,7 @@ def sync_env_and_files(remote_settings):
             )
             clog.info("Syncing pip-installed packages...")
             execute_command_in_remote_conda_env(
-                cmd=f"pip install --no-cache-dir -r {remote_path}/.env/requirements.txt",
+                cmd=f"pip install --no-cache-dir --no-deps -r {remote_path}/.env/requirements.txt",
                 remote_settings=remote_settings,
                 env=remote_env,
             )
