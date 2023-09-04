@@ -8,7 +8,7 @@ Introduction
 =======================================================
 
 Resolos is a toolkit written in Python for maintaining reproducible environments for scientific computations.
-It's main goal is to enable researchers to easily replicate environments through space (running code on HPC environment)
+Its main goal is to enable researchers to easily replicate environments through space (running code on HPC environment)
 and time (environment preservation for long term archival).
 
 Check out the project's homepage on `GitHub <https://github.com/nuvolos-cloud/resolos>`_.

@@ -16,6 +16,7 @@ from .exception import ResolosException, DependencyVersionError, SSHError
 from .unison import sync_files
 import pathlib
 import json
+import yaml
 import ast
 from semver import VersionInfo
 from datetime import datetime
@@ -386,6 +387,24 @@ def explicit_package_list(env_name: str, target=None, filename=None):
                 f.write(output)
 
 
+def pip_installed_package_list(env_name: str, target=None, filename=None):
+    ret_val, env_yaml = execute_conda_command(
+        f"env export", target=target, env=env_name, stdout_as_info=False
+    )
+    env = yaml.safe_load(env_yaml)
+
+    pip_packages = []
+    for dep in env["dependencies"]:
+        if isinstance(dep, dict) and "pip" in dep:
+            pip_packages = dep["pip"]
+
+    if filename:
+        with open(filename, "w") as f:
+            f.write("\n".join(pip_packages))
+
+    return pip_packages
+
+
 def get_requirements(env_name, filename=None):
     ret_val, output = execute_local_conda_command(f"list --json", env=env_name)
     if ret_val != 0:
@@ -481,14 +500,23 @@ def sync_env_and_files(remote_settings):
         )
         explicit_packages_file = env_folder / "spec-file.txt"
         explicit_package_list(local_env, filename=explicit_packages_file)
+        requirements_file = env_folder / "requirements.txt"
+        pip_installed_package_list(local_env, filename=requirements_file)
         clog.info(f"Syncing project files...")
         sync_files(remote_settings)
         if not check_conda_env_exists_remote(remote_settings, remote_env):
             create_conda_env_remote(remote_settings, remote_env)
         try:
+            clog.info("Syncing conda-installed packages...")
             execute_remote_conda_command(
                 f"install --name {remote_env} --file {remote_path}/.env/spec-file.txt",
                 remote_settings,
+            )
+            clog.info("Syncing pip-installed packages...")
+            execute_command_in_remote_conda_env(
+                cmd=f"pip install --no-cache-dir --no-deps -r {remote_path}/.env/requirements.txt",
+                remote_settings=remote_settings,
+                env=remote_env,
             )
             project_remote_settings = read_project_remote_config(remote_id)
             project_remote_settings["last_env_sync"] = datetime.utcnow()
@@ -562,3 +590,107 @@ def sync_env_and_files(remote_settings):
                 project_remote_settings = read_project_remote_config(remote_id)
                 project_remote_settings["last_env_sync"] = datetime.utcnow()
                 write_project_remote_config(remote_id, project_remote_settings)
+
+
+def get_dependency_tree(pipenv_json: pathlib.Path, env_name: str):
+    clog.debug(f"Collecting package dependencies...")
+    ret_val, output = execute_command_in_local_conda_env(
+        f'pipdeptree --exclude pip,pipdeptree,setuptools,wheel --json-tree > "{pipenv_json}"',
+        env_name,
+        stdout_as_info=False,
+    )
+    if ret_val != 0:
+        raise LocalCommandError(
+            f"Could not run pipdeptree to collect package dependencies, "
+            f"with command 'pipdeptree --exclude pip,pipdeptree,setuptools,wheel --json-tree', "
+            f"the error was:\n\n{output}\n\n"
+        )
+
+
+def sync_env_and_files_with_auto_resolve_deps(remote_settings, mamba=False):
+    """
+    Reworked environment sync to include pip-installed local dependencies,
+    like TensorFlow and PyTorch, without explicitly specifying dependent package versions.
+    The sync aims to install the same versions of conda/pip packages as in the local environment.
+    It will still only use package version specifications if the local and remote platforms are identical,
+    it will not match for exact python version/architecture/artifact ID.
+
+    New algorithm:
+    1. Export the complete (conda + pip packages) dependency tree of the local environment using pipdeptree.
+       This includes both conda and pip installed packages. The root nodes of the tree need to be installed.
+    2. Export the conda environment to a YAML file using `conda env export`. This will list conda-installed packages
+       with their version specifications. It also includes architecture-specific versions which we will discard.
+       It also includes a list of pip-installed packages.
+    3. Take the intersection of conda-installed packages from `conda env export` and the roots of the `pipdeptree` output.
+       These are packages that were installed using conda and are not depended upon.
+    4. Install these packages on the remote using `conda install -c channel1 -c channel2 package1==version1 package2==version2` on the remote.
+       We will list all channels specified in the local environment.
+    5. Install the remaining of the pip-installed root packages from the `pipdeptree` output
+       using a single `pip install --upgrade package3==version3 package4==version4` on the remote.
+    6. We assume that pip-installed packages that are dependencies of conda packages,
+       will be installed by conda as a dependency on the remote.
+
+    :param remote_settings: Remote settings dictionary
+    :param mamba: Use `mamba` instead of `conda` if True.
+    """
+    project_dir = find_project_dir()
+    remote_id = remote_settings["name"]
+    local_env, remote_env, remote_path = get_project_settings_for_remote(remote_id)
+    env_folder = project_dir / ".env"
+    pathlib.Path.mkdir(env_folder, exist_ok=True)
+
+    clog.info("Collecting details of conda environment...")
+    env_file = env_folder / "env.yaml"
+    export_conda_env(local_env, filename=env_file, only_explicitly_installed=False)
+    with open(env_file, "r") as f:
+        env_data = yaml.safe_load(f)
+
+    channels = ["-c " + c for c in env_data["channels"]]
+
+    all_conda_packages = {}
+    for package in env_data["dependencies"]:
+        if isinstance(package, str):  # Pip package list is a dict, skipped
+            all_conda_packages[package.split("=")[0]] = (
+                package.split("=")[0] + "==" + package.split("=")[1]
+            )
+
+    pipenv_json = env_folder / "pipenv.json"
+    get_dependency_tree(pipenv_json, local_env)
+    with pipenv_json.open("r") as f:
+        dep_tree = json.load(f)
+
+    root_conda_packages = []
+    root_pip_packages = []
+    for p in dep_tree:
+        versioned_package = f'{p["package_name"]}=={p["installed_version"]}'
+        # Compare only package names as reported conda/pip versions can differ, see the case of conda-tree
+        if p["package_name"] in all_conda_packages:
+            root_conda_packages.append(all_conda_packages[p["package_name"]])
+        else:
+            root_pip_packages.append(versioned_package)
+    clog.debug(
+        f"Root conda packages to install on remote {remote_id}: "
+        + ", ".join(root_conda_packages)
+    )
+    clog.debug(
+        f"Root pip packages to install on remote {remote_id}: "
+        + ", ".join(root_pip_packages)
+    )
+
+    clog.info(f"Installing conda packages on remote {remote_id} ...")
+    execute_remote_conda_command(
+        cmd=f"install -y {' '.join(channels)} {' '.join(root_conda_packages)}",
+        remote_settings=remote_settings,
+        env=remote_env,
+        mamba=mamba,
+    )
+
+    clog.info(f"Installing pip packages on remote {remote_id} ...")
+    execute_command_in_remote_conda_env(
+        cmd=f"pip install --no-cache-dir {' '.join(root_pip_packages)}",
+        remote_settings=remote_settings,
+        env=remote_env,
+    )
+    clog.info(
+        f"Remote conda and pip environment successfully synced on remote {remote_id} with local environment."
+    )

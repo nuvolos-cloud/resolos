@@ -33,11 +33,11 @@ def verify_unison_version(output):
     m = unison_ver_re.search(output)
     if m:
         unison_ver = VersionInfo.parse(m.group(1))
-        if unison_ver != UNISON_VERSION:
+        if unison_ver < UNISON_VERSION:
             raise DependencyVersionError(
-                f"Resolos requires a fixed unison version {UNISON_VERSION}, "
+                f"Resolos requires an unison version newer than {UNISON_VERSION}, "
                 f"while it seems you have version {unison_ver} installed. "
-                f"Please reinstall the requested version"
+                f"Please a newer unison version."
             )
     else:
         clog.warning(

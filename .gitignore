@@ -4,3 +4,4 @@ __pycache__
 .eggs
 dist
 resolos.egg-info
+.vscode
