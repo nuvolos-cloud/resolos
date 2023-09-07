@@ -31,13 +31,13 @@ from click import BadOptionUsage
 ver_re = re.compile(r"\d+.\d+.\d+")
 BASH_MIN_VERSION = VersionInfo.parse("5.0.0")
 CONDA_MIN_VERSION = VersionInfo.parse("4.8.0")
-UNISON_VERSION = VersionInfo.parse("2.51.3")
+UNISON_VERSION = VersionInfo.parse("2.53.3")
 
 SSH_SERVERALIVEINTERVAL = 30
 CONDA_LINUX_INSTALLER_URL = (
     "https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh"
 )
-UNISON_LINUX_INSTALLER_URL = "https://github.com/bcpierce00/unison/releases/download/v2.51.3/unison-v2.51.3+ocaml-4.10.0+x86_64.linux.static.tar.gz"
+UNISON_LINUX_INSTALLER_URL = "https://github.com/bcpierce00/unison/releases/download/v2.53.3/unison-2.53.3-ubuntu-x86_64-static.tar.gz"
 
 
 GLOBAL_CONFIG_TEMPLATE = {"app_name": str, "ssh_key": str}
