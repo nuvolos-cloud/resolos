@@ -36,7 +36,7 @@ def fake_ssh_cmd(
     if "conda --version" in cmd:
         return 0, echo("conda 4.9.2")
     elif "unison -version" in cmd:
-        return 0, echo("unison version 2.51.3")
+        return 0, echo("unison version 2.53.3")
     elif ".ssh/authorized_keys" in cmd:
         return 0, echo("[mock] Successfully set up SSH access on remote")
     elif "mkdir -p" in cmd:
@@ -71,7 +71,7 @@ def fake_shell_cmd(
     shell_type="bash_interactive_login",
 ):
     if "unison -version" in cmd:
-        return 0, echo("unison version 2.51.3")
+        return 0, echo("unison version 2.53.3")
     elif "export UNISON=" in cmd:
         return 0, echo("[mock] Successfully ran unison command")
     else:
