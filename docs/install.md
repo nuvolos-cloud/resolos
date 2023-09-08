@@ -40,17 +40,16 @@ Follow the [official documentation](https://docs.conda.io/projects/conda/en/late
 ## IV. unison
 
 Resolos uses [unison](https://github.com/bcpierce00/unison) for file synchronization between local and remote machines.
-Unison works most reliably if the exact same version (applies to the ocaml version used for building as well) 
-of unison is installed on both the remote and the local machine. 
-Currently it's recommended to use the `2.51.3+ocaml-4.10.0` version of it, as it can be easily installed for 
+Since version `2.52`, Unison has a degree of backward and forward compatibility.
+Currently it's recommended to use version`2.52` or newer for compatibility:, as it can be easily installed for 
 both macOS and Linux.
 
 ### Linux
 
-If you have wget and tar, you can execute the following command to install version `2.51.3+ocaml-4.10.0`:
+If you have wget and tar, you can execute the following command to install version `2.53.3`:
 
 ```
-wget https://github.com/bcpierce00/unison/releases/download/v2.51.3/unison-v2.51.3+ocaml-4.10.0+x86_64.linux.static.tar.gz && mkdir -p ~/bin && tar -xf unison-v2.51.3+ocaml-4.10.0+x86_64.linux.static.tar.gz -C ~ bin/unison && hash -r 
+wget https://github.com/bcpierce00/unison/releases/download/v2.53.3/unison-2.53.3-ubuntu-x86_64-static.tar.gz && mkdir -p ~/bin && tar -xf unison-2.53.3-ubuntu-x86_64-static.tar.gz -C ~ bin/unison && hash -r 
 ```
 
 
@@ -59,10 +58,10 @@ wget https://github.com/bcpierce00/unison/releases/download/v2.51.3/unison-v2.51
 First install [homebrew](https://brew.sh/), then use 
 
 ```
-wget https://raw.githubusercontent.com/Homebrew/homebrew-core/0edb12c144c6f64e6c35bdd4f6afb7d56d10bf60/Formula/unison.rb && brew install ./unison.rb
+brew install unison
 ```
 
-This should install version `unison version 2.51.3 (ocaml 4.10.0)`. To make sure, check with 
+This should install version `unison version 2.53.3` (or newer). To check, use the command 
 
 ```
 unsion -version

@@ -457,7 +457,7 @@ def get_nondep_packages(env_name, filename=None):
         )
     packages_data = json.loads(output)
     ret_val, output = execute_command_in_local_conda_env(
-        "conda-tree leaves", env_name, stdout_as_info=False
+        "conda-tree leaves --json", env_name, stdout_as_info=False
     )
     if ret_val != 0:
         raise LocalCommandError(
@@ -465,7 +465,7 @@ def get_nondep_packages(env_name, filename=None):
             f"with command 'conda-tree leaves', "
             f"the error was:\n\n{output}\n\n"
         )
-    leaves = ast.literal_eval(output)
+    leaves = json.loads(output)
     res = []
     for pkg in leaves:
         if pkg not in ["conda-tree", "pip", "conda"]:
