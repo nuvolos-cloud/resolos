@@ -1,12 +1,11 @@
 from .logging import clog
-import tarfile
 from .conda import (
     pack_conda_env,
     explicit_package_list,
     export_conda_env,
     execute_local_conda_command,
     create_conda_env_local,
-    get_requirements,
+    pip_installed_package_list,
     get_nondep_packages,
 )
 from .exception import (
@@ -25,15 +24,18 @@ from .config import (
 )
 from .shell import run_shell_cmd
 from .storage.yareta import deposit_archive, download_archive
-import click
+from .version import __version__
+
 import shutil
 import tempfile
 import urllib.request
-import pathlib
 import glob
 import os
-from .version import __version__
+import tarfile
 from datetime import datetime
+from pathlib import Path
+
+import click
 
 
 PACK_NAME = "env_pack.tar.gz"
@@ -84,8 +86,9 @@ def make_archive(env_name: str, **kwargs):
     )
     if kwargs.get("filename"):
         output_filename = kwargs.get("filename")
-        make_archive_file(env_name, output_filename=output_filename)
-        clog.info(f"Successfully archived resolos project to {output_filename}!")
+        light = kwargs.get("light")
+        make_archive_file(env_name, output_filename=output_filename, light=light)
+        clog.info(f"Successfully archived resolos project to {output_filename}.")
     elif kwargs.get("organizational_unit_id"):
         with tempfile.TemporaryDirectory() as tmpdirname:
             output_filename = f"{tmpdirname}/{ARCHIVE_FILENAME}"
@@ -133,7 +136,7 @@ def make_archive(env_name: str, **kwargs):
         raise ResolosException(f"Unknown resolos archival destination")
 
 
-def make_archive_file(env_name: str, output_filename: str):
+def make_archive_file(env_name: str, output_filename: str, light: bool = False):
     resolos_dir = find_resolos_dir()
     project_dir = resolos_dir.parent
     files_path = str(project_dir.absolute())
@@ -145,8 +148,11 @@ def make_archive_file(env_name: str, output_filename: str):
         explicit_packages_path = f"{tmpdirname}/{EXPLICIT_PACKAGES_NAME}"
         requirements_path = f"{tmpdirname}/{REQUIREMENTS_NAME}"
         nondep_path = f"{tmpdirname}/{NONDEP_PACKAGES_NAME}"
-        clog.info(f"Packing environment...")
-        pack_conda_env(env_name, pack_absolute_path)
+        if not light:
+            clog.info(f"Packing environment...")
+            pack_conda_env(env_name, pack_absolute_path)
+        else:
+            clog.info("Skipping environment packing")
         clog.info(f"Exporting environment...")
         export_conda_env(env_name, filename=env_history_yaml_path)
         export_conda_env(
@@ -155,7 +161,7 @@ def make_archive_file(env_name: str, output_filename: str):
         clog.info(f"Exporting explicit packages list...")
         explicit_package_list(env_name, filename=explicit_packages_path)
         clog.info(f"Exporting requirements file...")
-        get_requirements(env_name, filename=requirements_path)
+        pip_installed_package_list(env_name, filename=requirements_path)
         clog.info(f"Exporting non-dependent packages...")
         get_nondep_packages(env_name, filename=nondep_path)
         pax_headers = {
@@ -167,7 +173,8 @@ def make_archive_file(env_name: str, output_filename: str):
         ) as tar:
             tar.add(files_path, arcname=FILES_NAME, filter=filter_files)
             tar.add(resolos_path, arcname=RESOLOS_FOLDER_NAME, filter=filter_resolos)
-            tar.add(pack_absolute_path, arcname=PACK_NAME)
+            if not light:
+                tar.add(pack_absolute_path, arcname=PACK_NAME)
             tar.add(env_yaml_path, arcname=ENV_YAML_NAME)
             tar.add(env_history_yaml_path, arcname=ENV_FROM_HISTORY_YAML_NAME)
             tar.add(explicit_packages_path, arcname=EXPLICIT_PACKAGES_NAME)
@@ -253,6 +260,10 @@ def load_archive_file(input_filename: str, files_path):
                     execute_local_conda_command(
                         f"install -y --name {new_env_name} --file {explicit_packages_path}"
                     )
+                    clog.info("Installing pip packages from requirements.txt ...")
+                    execute_local_conda_command(
+                        f"run -n {new_env_name} pip install -r {requirements_path}"
+                    )
                     project_settings["env_name"] = new_env_name
                     if old_env_name:
                         execute_local_conda_command(
@@ -260,17 +271,29 @@ def load_archive_file(input_filename: str, files_path):
                         )
                     pdc.write(project_settings)
                 except Exception as ex:
-                    clog.info(
-                        f"Failed to load conda env using explicit packages list, "
-                        f"will use now conda-pack..."
-                    )
-                    clog.debug(f"The error was:\n\n{ex}\n\n")
-                    extract_file(tar, PACK_NAME, pack_absolute_path)
-                    run_shell_cmd(
-                        f"mkdir -p ~/.resolos/envs/{new_env_name} && "
-                        f"tar -xzf {pack_absolute_path} -C ~/.resolos/envs/{new_env_name} && "
-                        f"source ~/.resolos/envs/{new_env_name}/bin/activate && "
-                        f"conda-unpack",
+                    if Path(pack_absolute_path).exists():
+                        clog.info(
+                            f"Failed to load conda env using explicit packages list, "
+                            f"will use now conda-pack..."
+                        )
+                        clog.debug(f"The error was:\n\n{ex}\n\n")
+                        extract_file(tar, PACK_NAME, pack_absolute_path)
+                        run_shell_cmd(
+                            f"mkdir -p ~/.resolos/envs/{new_env_name} && "
+                            f"tar -xzf {pack_absolute_path} -C ~/.resolos/envs/{new_env_name} && "
+                            f"source ~/.resolos/envs/{new_env_name}/bin/activate && "
+                            f"conda-unpack",
+                        )
+                    else:
+                        clog.info(
+                            "Conda packages were not packed in the archive, will try the no dependencies list"
+                        )
+                        execute_local_conda_command(
+                            f"install -y --name {new_env_name} --file {nondep_path}"
+                        )
+                    clog.info("Installing pip packages from requirements.txt ...")
+                    execute_local_conda_command(
+                        f"run -n {new_env_name} pip install -r {requirements_path}"
                     )
                     project_settings[
                         "env_name"
@@ -286,6 +309,10 @@ def load_archive_file(input_filename: str, files_path):
                     )
                     execute_local_conda_command(
                         f"env update -n {new_env_name} -f {env_yaml_path}"
+                    )
+                    clog.info("Installing pip packages from requirements.txt ...")
+                    execute_local_conda_command(
+                        f"run -n {new_env_name} pip install -r {requirements_path}"
                     )
                     project_settings["env_name"] = new_env_name
                     if old_env_name:
@@ -303,6 +330,10 @@ def load_archive_file(input_filename: str, files_path):
                         execute_local_conda_command(
                             f"env update -n {new_env_name} -f {env_history_yaml_path}"
                         )
+                        clog.info("Installing pip packages from requirements.txt ...")
+                        execute_local_conda_command(
+                            f"run -n {new_env_name} pip install -r {requirements_path}"
+                        )
                         project_settings["env_name"] = new_env_name
                         if old_env_name:
                             execute_local_conda_command(
@@ -311,33 +342,21 @@ def load_archive_file(input_filename: str, files_path):
                         pdc.write(project_settings)
                     except LocalCommandError:
                         clog.info(
-                            f"Failed to load conda env using only the explicitly installed packages, will try now "
-                            f"the requirements file"
+                            f"Failed to load conda env from history file, will try now "
+                            f"the list of non-dependent packages only"
                         )
-                        try:
+                        execute_local_conda_command(
+                            f"install -y --name {new_env_name} --file {nondep_path}"
+                        )
+                        execute_local_conda_command(
+                            f"run -n {new_env_name} pip install -r {requirements_path}"
+                        )
+                        project_settings["env_name"] = new_env_name
+                        if old_env_name:
                             execute_local_conda_command(
-                                f"install -y --name {new_env_name} --file {requirements_path}"
+                                f"remove -y --name {old_env_name} --all"
                             )
-                            project_settings["env_name"] = new_env_name
-                            if old_env_name:
-                                execute_local_conda_command(
-                                    f"remove -y --name {old_env_name} --all"
-                                )
-                            pdc.write(project_settings)
-                        except LocalCommandError:
-                            clog.info(
-                                f"Failed to load conda env using only the requirements file, will try now "
-                                f"the list of non-dependent packages only"
-                            )
-                            execute_local_conda_command(
-                                f"install -y --name {new_env_name} --file {nondep_path}"
-                            )
-                            project_settings["env_name"] = new_env_name
-                            if old_env_name:
-                                execute_local_conda_command(
-                                    f"remove -y --name {old_env_name} --all"
-                                )
-                            pdc.write(project_settings)
+                        pdc.write(project_settings)
 
 
 def load_archive(**kwargs):

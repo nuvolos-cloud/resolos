@@ -624,6 +624,14 @@ def res_archive(ctx):
     type=str,
     help="Comma-separated list of the Yareta deposit keywords",
 )
+@click.option(
+    "-l",
+    "--light",
+    is_flag=True,
+    default=False,
+    help="Do not pack installed conda packages in the archive, only store the package list.",
+    required=False,
+)
 @click.pass_context
 def res_archive_create(ctx, **kwargs):
     """
