@@ -230,7 +230,7 @@ def load_archive_file(input_filename: str, files_path):
             raise NotAResolosArchiveError(
                 f"{input_filename} is not an archive created by resolos."
             )
-        clog.info(f"Loading archive...")
+        clog.info(f"Loading archive to new conda env [{new_env_name}]...")
         resolos_version = tar.pax_headers[TAR_HEADER_RESOLOS_VERSION]
         created_on = tar.pax_headers[TAR_HEADER_CREATED_ON]
         clog.debug(
@@ -244,7 +244,6 @@ def load_archive_file(input_filename: str, files_path):
             env_history_yaml_path = f"{tmpdirname}/{ENV_FROM_HISTORY_YAML_NAME}"
             explicit_packages_path = f"{tmpdirname}/{EXPLICIT_PACKAGES_NAME}"
             requirements_path = f"{tmpdirname}/{REQUIREMENTS_NAME}"
-            nondep_path = f"{tmpdirname}/{NONDEP_PACKAGES_NAME}"
             resolos_path = f"{tmpdirname}/{RESOLOS_FOLDER_NAME}"
             extract_file(tar, ENV_YAML_NAME, tmpdirname)
             extract_file(tar, ENV_FROM_HISTORY_YAML_NAME, tmpdirname)
