@@ -212,11 +212,11 @@ def install_pip_packages(
     if resolos_version >= "0.5.0":
         clog.info("Installing pip packages from requirements.txt ...")
         execute_local_conda_command(
-            f"run -n {new_env_name} pip install -r {requirements_path}"
+            f"run -n {new_env_name} pip install --no-cache-dir --no-deps -r {requirements_path}"
         )
     else:
         clog.warning(
-            "Resolos version is older than 0.5.0, skipping the install of pip packages"
+            "The archive was created with a Resolos version older than 0.5.0, skipping the installation of pip packages"
         )
 
 
@@ -277,11 +277,11 @@ def load_archive_file(input_filename: str, files_path):
                         )
                     pdc.write(project_settings)
                 except Exception as ex:
+                    clog.warning(
+                        "Failed to load conda env using explicit packages list"
+                    )
                     if Path(pack_absolute_path).exists():
-                        clog.info(
-                            f"Failed to load conda env using explicit packages list, "
-                            f"will use now conda-pack..."
-                        )
+                        clog.info(f"Loading conda env from conda-pack archive...")
                         clog.debug(f"The error was:\n\n{ex}\n\n")
                         extract_file(tar, PACK_NAME, pack_absolute_path)
                         run_shell_cmd(
@@ -292,7 +292,7 @@ def load_archive_file(input_filename: str, files_path):
                         )
                     else:
                         clog.info(
-                            "Conda packages were not packed in the archive, will try the explicitly installed packages list"
+                            "Conda environment was not packed in the archive, will try the explicitly installed packages list"
                         )
                         execute_local_conda_command(
                             f"env update -n {new_env_name} -f {env_history_yaml_path}"
