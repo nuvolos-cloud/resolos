@@ -28,6 +28,16 @@ The archive should not be created inside the project itself, and it can take a c
 is scanned and exported. Once finished, you can publish the archive file and then other users will be able to load your 
 environment with resolos easily.
 
+By default, archives will contain all conda-installed libraries, this can result in a rather large archive depending on the number of conda libraries used.
+
+If you only wish to store the list of conda and pip package versions used in the archive, use the `--light` flag:
+
+```bash
+r3s archive create -f ../my_archive_name.tar.gz --light
+```
+
+Since Resolos v0.5.0, the list of pip-installed packages will be included in the archive and will be installed when the archive is loaded.
+
 ### Loading an archive
 
 You can initialize new projects from an archive file:

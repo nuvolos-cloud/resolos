@@ -175,7 +175,7 @@ def initialize_user_configs():
 
 
 def randomString(stringLength=8):
-    """Generate a random string of fixed length """
+    """Generate a random string of fixed length"""
     letters = string.ascii_lowercase
     return "".join(random.choice(letters) for i in range(stringLength))
 
@@ -226,7 +226,7 @@ def get_ssh_key():
 
 def info():
     clog.info(
-        """
+        r"""
                      _           
                     | |          
  _ __ ___  ___  ___ | | ___  ___ 
